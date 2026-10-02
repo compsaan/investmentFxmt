@@ -3459,6 +3459,30 @@
         opacity: 0.7;
       }
 
+      .auth-submit.is-submitting {
+        opacity: 0.88;
+        filter: saturate(0.92);
+      }
+
+      .auth-submit.is-submitting::before {
+        content: "";
+        display: inline-block;
+        width: 13px;
+        height: 13px;
+        margin-inline-end: 9px;
+        vertical-align: -2px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        border-top-color: #ffffff;
+        animation: authSubmitSpin 720ms linear infinite;
+      }
+
+      @keyframes authSubmitSpin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
       .auth-back {
         display: block;
         margin: 13px auto 0;
@@ -7576,7 +7600,34 @@ html[data-theme="light"] .app-shell {
         .deposit-steps { padding-inline: 20px; }
         .deposit-body { padding-inline: 20px; }
       }
-</style>
+
+      /* ===== Active devices center ===== */
+      .devices-layer{position:fixed;inset:0;z-index:4200;display:flex;justify-content:center;background:rgba(2,5,18,.76);backdrop-filter:blur(18px);opacity:0;visibility:hidden;transition:opacity .28s ease,visibility .28s ease}
+      .devices-layer.is-open{opacity:1;visibility:visible}
+      .devices-page{width:min(100%,560px);height:100%;overflow:auto;overscroll-behavior:contain;padding:calc(18px + env(safe-area-inset-top)) 18px calc(30px + env(safe-area-inset-bottom));background:radial-gradient(110% 38% at 50% 0%,rgba(54,130,255,.24),transparent 72%),linear-gradient(180deg,#0b1230,#080b1b 72%);color:#f8fbff;transform:translateY(24px);transition:transform .32s ease}
+      .devices-layer.is-open .devices-page{transform:translateY(0)}
+      .devices-page::-webkit-scrollbar{display:none}.devices-page{scrollbar-width:none}
+      .devices-header{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:10px;position:sticky;top:calc(-18px - env(safe-area-inset-top));z-index:3;margin:-1px -2px 22px;padding:10px 2px 12px;background:linear-gradient(180deg,rgba(11,18,48,.98),rgba(11,18,48,.9),transparent)}
+      .devices-title{text-align:center;font-size:20px;font-weight:800;margin:0;letter-spacing:0}
+      .devices-icon-button{display:grid;place-items:center;width:44px;height:44px;border:1px solid rgba(117,211,255,.3);border-radius:14px;background:rgba(42,82,155,.38);color:#8ce8ff;font-size:17px;cursor:pointer;transition:.2s ease}
+      .devices-icon-button:hover,.devices-icon-button:focus-visible{border-color:rgba(133,226,255,.72);background:rgba(49,105,197,.55);outline:none}.devices-icon-button.is-loading i{animation:devices-spin .8s linear infinite}
+      .devices-security-card{display:grid;grid-template-columns:58px 1fr;gap:15px;align-items:center;padding:18px;border:1px solid rgba(105,202,255,.32);border-radius:20px;background:linear-gradient(145deg,rgba(38,91,171,.38),rgba(20,37,91,.54));box-shadow:inset 0 1px rgba(255,255,255,.08),0 16px 40px rgba(0,0,0,.18)}
+      .devices-security-icon{display:grid;place-items:center;width:58px;height:58px;border:1px solid rgba(130,224,255,.45);border-radius:18px;background:linear-gradient(145deg,rgba(63,170,255,.52),rgba(35,70,151,.68));color:#9bedff;font-size:25px;box-shadow:0 10px 24px rgba(16,91,203,.25)}
+      .devices-security-copy strong{display:block;font-size:17px;margin-bottom:5px}.devices-security-copy span{display:block;color:#aab7db;font-size:13px;line-height:1.65}.devices-count{margin-top:10px;display:inline-flex!important;align-items:center;gap:7px;color:#8ef3d2!important;font-weight:700}.devices-count i{font-size:8px}
+      .devices-section-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:24px 2px 11px}.devices-section-head h3{margin:0;font-size:16px}.devices-section-head span{color:#8999c5;font-size:12px}
+      .devices-list{display:grid;gap:10px}.device-card{position:relative;padding:17px;border:1px solid rgba(101,155,224,.28);border-radius:18px;background:linear-gradient(145deg,rgba(30,51,104,.68),rgba(13,23,61,.8));box-shadow:inset 0 1px rgba(255,255,255,.05)}
+      .device-card.current{border-color:rgba(104,220,255,.58);box-shadow:0 0 0 1px rgba(89,197,255,.1),inset 0 1px rgba(255,255,255,.08)}
+      .device-card-main{display:grid;grid-template-columns:50px minmax(0,1fr) auto;gap:12px;align-items:center}.device-type-icon{display:grid;place-items:center;width:50px;height:50px;border-radius:15px;background:rgba(51,112,194,.38);color:#90e7ff;font-size:21px;border:1px solid rgba(119,209,255,.25)}
+      .device-name{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.device-subtitle{display:block;margin-top:4px;color:#9ba8ce;font-size:12px;line-height:1.5}.device-current-badge{align-self:start;display:inline-flex;align-items:center;gap:5px;padding:6px 8px;border-radius:999px;background:rgba(33,205,153,.13);color:#88f0ce;font-size:11px;font-weight:800;border:1px solid rgba(50,221,170,.24)}
+      .device-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:15px;padding-top:14px;border-top:1px solid rgba(133,177,234,.13)}.device-detail{min-width:0}.device-detail span{display:block;color:#7786b1;font-size:10px;margin-bottom:3px}.device-detail strong{display:block;color:#dbe4ff;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .devices-actions{margin-top:19px}.devices-signout{width:100%;min-height:52px;border:1px solid rgba(255,113,145,.36);border-radius:15px;background:rgba(154,37,78,.18);color:#ff9eb6;font:inherit;font-weight:800;cursor:pointer;transition:.2s ease}.devices-signout:not(:disabled):hover{background:rgba(188,45,88,.3)}.devices-signout:disabled{opacity:.48;cursor:not-allowed}
+      .devices-note{display:grid;grid-template-columns:34px 1fr;gap:11px;margin-top:15px;padding:14px;border-radius:15px;background:rgba(30,55,110,.3);color:#9facd0;font-size:12px;line-height:1.7}.devices-note i{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:rgba(69,143,229,.2);color:#79dfff}
+      .devices-confirm{position:fixed;inset:0;z-index:4300;display:grid;place-items:center;padding:22px;background:rgba(1,3,12,.74);opacity:0;visibility:hidden;transition:.2s}.devices-confirm.is-open{opacity:1;visibility:visible}.devices-confirm-box{width:min(100%,390px);padding:22px;border-radius:20px;border:1px solid rgba(112,171,235,.3);background:#111a3d;color:#f8fbff;text-align:center;box-shadow:0 28px 80px rgba(0,0,0,.5)}.devices-confirm-icon{display:grid;place-items:center;width:58px;height:58px;margin:0 auto 14px;border-radius:18px;background:rgba(255,87,125,.15);color:#ff8ca8;font-size:23px}.devices-confirm-box h3{margin:0 0 8px;font-size:18px}.devices-confirm-box p{margin:0;color:#9faed3;font-size:13px;line-height:1.7}.devices-confirm-buttons{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}.devices-confirm-buttons button{min-height:46px;border-radius:13px;font:inherit;font-weight:800;cursor:pointer}.devices-confirm-cancel{border:1px solid rgba(123,174,233,.3);background:rgba(47,78,139,.34);color:#dce8ff}.devices-confirm-submit{border:1px solid rgba(255,107,141,.38);background:#a82e50;color:#fff}
+      html[data-theme="light"] .devices-layer{background:rgba(20,39,77,.28)}html[data-theme="light"] .devices-page{background:radial-gradient(110% 38% at 50% 0%,rgba(80,156,255,.22),transparent 72%),linear-gradient(180deg,#f2f6ff,#e9effb 72%);color:#142245}html[data-theme="light"] .devices-header{background:linear-gradient(180deg,rgba(242,246,255,.98),rgba(242,246,255,.9),transparent)}html[data-theme="light"] .devices-security-card,html[data-theme="light"] .device-card{background:rgba(255,255,255,.72);border-color:rgba(36,104,197,.19);box-shadow:0 12px 32px rgba(35,68,125,.1)}html[data-theme="light"] .devices-security-copy span,html[data-theme="light"] .device-subtitle,html[data-theme="light"] .devices-section-head span,html[data-theme="light"] .devices-note{color:#64739a}html[data-theme="light"] .device-detail strong{color:#26385f}html[data-theme="light"] .devices-note{background:rgba(80,130,210,.1)}html[data-theme="light"] .devices-confirm-box{background:#f5f8ff;color:#182748}
+      @keyframes devices-spin{to{transform:rotate(360deg)}}
+      @media(max-width:380px){.devices-page{padding-left:12px;padding-right:12px}.device-card{padding:14px}.device-card-main{grid-template-columns:44px minmax(0,1fr)}.device-current-badge{grid-column:2;justify-self:start}.device-type-icon{width:44px;height:44px}.device-details{grid-template-columns:1fr}.devices-security-card{grid-template-columns:50px 1fr}.devices-security-icon{width:50px;height:50px}}
+
+    </style>
   </head>
   <body>
        <main class="app-shell" aria-label="FXTM wallet home" data-i18n-aria="appAria">
@@ -7894,7 +7945,7 @@ html[data-theme="light"] .app-shell {
               </label>
 
               <p class="auth-status" id="registerStatus" role="alert" aria-live="polite"></p>
-               <button class="auth-submit" type="submit" data-i18n="createAccount">إنشاء الحساب</button>
+               <button class="auth-submit" type="submit" data-i18n="createAccount" data-submit-label="creatingAccount">إنشاء الحساب</button>
             </form>
 
              <button class="auth-back" type="button" data-auth-switch="login" data-i18n="login">تسجيل الدخول</button>
@@ -7930,7 +7981,7 @@ html[data-theme="light"] .app-shell {
               </div>
 
               <p class="auth-status" id="loginStatus" role="alert" aria-live="polite"></p>
-               <button class="auth-submit" type="submit" data-i18n="loginSubmit">دخول إلى الحساب</button>
+               <button class="auth-submit" type="submit" data-i18n="loginSubmit" data-submit-label="loggingIn">دخول إلى الحساب</button>
             </form>
 
              <button class="auth-back" type="button" data-auth-switch="register" data-i18n="createAccount">إنشاء حساب</button>
@@ -8336,6 +8387,31 @@ html[data-theme="light"] .app-shell {
     </main>
 
 
+
+    <div class="devices-layer" id="devicesLayer" aria-hidden="true">
+      <section class="devices-page" role="dialog" aria-modal="true" aria-labelledby="devicesTitle" dir="rtl">
+        <header class="devices-header">
+          <button class="devices-icon-button" id="devicesRefresh" type="button" aria-label="تحديث قائمة الأجهزة" title="تحديث"><i class="fa-solid fa-rotate" aria-hidden="true"></i></button>
+          <h2 class="devices-title" id="devicesTitle">الأجهزة النشطة</h2>
+          <button class="devices-icon-button" id="devicesClose" type="button" aria-label="العودة" title="العودة"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+        </header>
+        <div class="devices-security-card">
+          <span class="devices-security-icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span>
+          <div class="devices-security-copy"><strong id="devicesSecurityTitle">جلسات تسجيل الدخول</strong><span id="devicesSecurityText">راجع الأجهزة التي استخدمت حسابك وحافظ على أمانه.</span><span class="devices-count"><i class="fa-solid fa-circle" aria-hidden="true"></i><b id="devicesCount">1</b>&nbsp;<span id="devicesCountLabel">جهاز نشط</span></span></div>
+        </div>
+        <div class="devices-section-head"><h3 id="devicesListTitle">الأجهزة المسجّل دخولها</h3><span id="devicesUpdatedAt">تم التحديث الآن</span></div>
+        <div class="devices-list" id="devicesList"></div>
+        <div class="devices-actions"><button class="devices-signout" id="devicesSignOutOthers" type="button"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>&nbsp; <span id="devicesSignOutLabel">تسجيل خروج الأجهزة الأخرى</span></button></div>
+        <div class="devices-note"><i class="fa-solid fa-lock" aria-hidden="true"></i><span id="devicesNote">إذا لاحظت جهازاً لا تعرفه، سجّل خروجه فوراً ثم غيّر كلمة المرور لحماية حسابك.</span></div>
+      </section>
+    </div>
+    <div class="devices-confirm" id="devicesConfirm" aria-hidden="true">
+      <section class="devices-confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="devicesConfirmTitle">
+        <span class="devices-confirm-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span><h3 id="devicesConfirmTitle">تسجيل خروج الأجهزة الأخرى؟</h3><p id="devicesConfirmText">ستنتهي جميع الجلسات الأخرى، وسيبقى هذا الجهاز متصلاً.</p>
+        <div class="devices-confirm-buttons"><button class="devices-confirm-submit" id="devicesConfirmSubmit" type="button">تسجيل الخروج</button><button class="devices-confirm-cancel" id="devicesConfirmCancel" type="button">إلغاء</button></div>
+      </section>
+    </div>
+
     <div class="wallet-details-layer" id="walletDetailsLayer" aria-hidden="true">
       <section class="wallet-details-page" role="dialog" aria-modal="true" aria-labelledby="walletDetailsTitle">
         <header class="wallet-details-header">
@@ -8348,7 +8424,7 @@ html[data-theme="light"] .app-shell {
           <div class="wallet-summary-value" id="walletDetailsBalance">$0<span>.00</span></div>
           <div class="wallet-performance"><span class="wallet-change"><i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i>0.00%</span><span class="wallet-period">24h</span></div>
           <div class="wallet-asset-grid">
-            <div class="wallet-asset-item"><span data-i18n="availableBalance">الرصيد المتاح</span><strong>$0.00</strong></div>
+            <div class="wallet-asset-item"><span data-i18n="availableBalance">الرصيد المتاح</span><strong id="walletDetailsAvailable">$0.00</strong></div>
             <div class="wallet-asset-item"><span data-i18n="investedBalance">الهامش</span><strong>$0.00</strong></div>
             <div class="wallet-asset-item"><span data-i18n="pendingBalance">رصيد مجمد</span><strong>$0.00</strong></div>
           </div>
@@ -8711,12 +8787,6 @@ html[data-theme="light"] .app-shell {
               <input class="deposit-amount-input" id="withdrawAmountInput" type="number" inputmode="decimal" min="10" max="100000" step="0.01" placeholder="0.00" aria-describedby="withdrawAmountHint" />
               <span class="deposit-currency">USDT</span>
             </div>
-            <div class="fx-chip-row" id="withdrawQuickAmounts">
-              <button class="fx-chip" type="button" data-amount="50">50</button>
-              <button class="fx-chip" type="button" data-amount="100">100</button>
-              <button class="fx-chip" type="button" data-amount="500">500</button>
-              <button class="fx-chip" type="button" data-amount="1000">1,000</button>
-            </div>
             <div class="deposit-hint" id="withdrawAmountHint"><span>الحد الأدنى للسحب 10 USDT</span><span>الحد الأقصى 100,000 USDT يوميًا</span></div>
             <p class="deposit-error" id="withdrawAmountError" aria-live="polite"></p>
             <div class="deposit-footer">
@@ -8788,10 +8858,6 @@ html[data-theme="light"] .app-shell {
             <div class="fx-field" id="withdrawMemoField" hidden>
               <label class="deposit-label" for="withdrawMemoInput">Memo / Comment (مطلوب لهذه الشبكة)</label>
               <input class="fx-input" id="withdrawMemoInput" type="text" dir="ltr" spellcheck="false" autocomplete="off" placeholder="أدخل الـ Memo الخاص بالمحفظة المستقبلة" />
-            </div>
-            <div class="fx-field">
-              <label class="deposit-label" for="withdrawLabelInput">اسم مستعار للعنوان (اختياري)</label>
-              <input class="fx-input" id="withdrawLabelInput" type="text" autocomplete="off" placeholder="مثال: محفظتي على Binance" />
             </div>
             <div class="deposit-notice"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><span>تحقق من العنوان حرفًا بحرف. عمليات الشبكات الرقمية نهائية ولا يمكن التراجع عنها.</span></div>
             <p class="deposit-error" id="withdrawAddressError" aria-live="polite"></p>
@@ -9123,6 +9189,8 @@ html[data-theme="light"] .app-shell {
         usernameLoginPlaceholder: "Username",
         passwordLoginPlaceholder: "Password",
         loginSubmit: "Log in to account",
+        creatingAccount: "Creating account…",
+        loggingIn: "Logging in…",
         accountBalanceAria: "Account and balance data",
         openAccount: "Open account for Vikas",
         userLabel: "USR:",
@@ -9331,6 +9399,8 @@ html[data-theme="light"] .app-shell {
           usernameLoginPlaceholder: "اسم المستخدم",
           passwordLoginPlaceholder: "كلمة المرور",
           loginSubmit: "دخول إلى الحساب",
+          creatingAccount: "جارِ إنشاء الحساب",
+          loggingIn: "جارِ تسجيل الدخول",
           accountBalanceAria: "بيانات الحساب والرصيد",
           openAccount: "فتح حساب Vikas",
           userLabel: "USR:",
@@ -9527,6 +9597,8 @@ html[data-theme="light"] .app-shell {
           usernameLoginPlaceholder: "Nom d’utilisateur",
           passwordLoginPlaceholder: "Mot de passe",
           loginSubmit: "Se connecter au compte",
+          creatingAccount: "Création du compte…",
+          loggingIn: "Connexion…",
           accountBalanceAria: "Données du compte et du solde",
           openAccount: "Ouvrir le compte de Vikas",
           userLabel: "USR:",
@@ -9637,6 +9709,8 @@ html[data-theme="light"] .app-shell {
           usernameLoginPlaceholder: "Nombre de usuario",
           passwordLoginPlaceholder: "Contraseña",
           loginSubmit: "Entrar en la cuenta",
+          creatingAccount: "Creando cuenta…",
+          loggingIn: "Iniciando sesión…",
           accountBalanceAria: "Datos de cuenta y saldo",
           openAccount: "Abrir la cuenta de Vikas",
           userLabel: "USR:",
@@ -9747,6 +9821,8 @@ html[data-theme="light"] .app-shell {
           usernameLoginPlaceholder: "Benutzername",
           passwordLoginPlaceholder: "Passwort",
           loginSubmit: "Am Konto anmelden",
+          creatingAccount: "Konto wird erstellt…",
+          loggingIn: "Anmeldung läuft…",
           accountBalanceAria: "Konto- und Guthabendaten",
           openAccount: "Konto von Vikas öffnen",
           userLabel: "USR:",
@@ -9857,6 +9933,8 @@ html[data-theme="light"] .app-shell {
           usernameLoginPlaceholder: "Kullanıcı adı",
           passwordLoginPlaceholder: "Şifre",
           loginSubmit: "Hesaba giriş yap",
+          creatingAccount: "Hesap oluşturuluyor…",
+          loggingIn: "Giriş yapılıyor…",
           accountBalanceAria: "Hesap ve bakiye bilgileri",
           openAccount: "Vikas hesabını aç",
           userLabel: "USR:",
@@ -9967,6 +10045,8 @@ html[data-theme="light"] .app-shell {
           usernameLoginPlaceholder: "Nome de usuário",
           passwordLoginPlaceholder: "Senha",
           loginSubmit: "Entrar na conta",
+          creatingAccount: "Criando conta…",
+          loggingIn: "Entrando…",
           accountBalanceAria: "Dados da conta e saldo",
           openAccount: "Abrir a conta de Vikas",
           userLabel: "USR:",
@@ -10077,6 +10157,8 @@ html[data-theme="light"] .app-shell {
           usernameLoginPlaceholder: "Имя пользователя",
           passwordLoginPlaceholder: "Пароль",
           loginSubmit: "Войти в аккаунт",
+          creatingAccount: "Создание аккаунта…",
+          loggingIn: "Выполняется вход…",
           accountBalanceAria: "Данные аккаунта и баланса",
           openAccount: "Открыть аккаунт Vikas",
           userLabel: "USR:",
@@ -10187,6 +10269,8 @@ html[data-theme="light"] .app-shell {
           usernameLoginPlaceholder: "用户名",
           passwordLoginPlaceholder: "密码",
           loginSubmit: "登录账户",
+          creatingAccount: "正在创建账户…",
+          loggingIn: "正在登录…",
           accountBalanceAria: "账户和余额数据",
           openAccount: "打开 Vikas 的账户",
           userLabel: "USR:",
@@ -10297,6 +10381,8 @@ html[data-theme="light"] .app-shell {
           usernameLoginPlaceholder: "ユーザー名",
           passwordLoginPlaceholder: "パスワード",
           loginSubmit: "アカウントにログイン",
+          creatingAccount: "アカウントを作成中…",
+          loggingIn: "ログイン中…",
           accountBalanceAria: "アカウントと残高のデータ",
           openAccount: "Vikas のアカウントを開く",
           userLabel: "USR:",
@@ -10407,6 +10493,8 @@ html[data-theme="light"] .app-shell {
           usernameLoginPlaceholder: "उपयोगकर्ता नाम",
           passwordLoginPlaceholder: "पासवर्ड",
           loginSubmit: "खाते में लॉग इन करें",
+          creatingAccount: "खाता बनाया जा रहा है…",
+          loggingIn: "लॉग इन किया जा रहा है…",
           accountBalanceAria: "खाता और शेष राशि का डेटा",
           openAccount: "Vikas का खाता खोलें",
           userLabel: "USR:",
@@ -10574,6 +10662,9 @@ html[data-theme="light"] .app-shell {
         document.querySelectorAll("[data-i18n]").forEach((element) => {
           element.textContent = t(element.dataset.i18n);
         });
+        document.querySelectorAll('[data-submitting="true"]').forEach((button) => {
+          button.textContent = t(button.dataset.submitLabel || button.dataset.i18n);
+        });
         document.querySelectorAll("[data-i18n-html]").forEach((element) => {
           element.innerHTML = t(element.dataset.i18nHtml);
         });
@@ -10700,9 +10791,10 @@ html[data-theme="light"] .app-shell {
       const passwordStrength = document.getElementById("passwordStrength");
       const passwordStrengthLabel = document.getElementById("passwordStrengthLabel");
       const strengthBars = [...passwordStrength.querySelectorAll(".strength-bar")];
-      const API_URL = "https://script.google.com/macros/s/AKfycbyVuySPuJlfAItHTaxBvfDqQKQ91fHENArHmJk0v7f6tJxjJMYoSuNz9NHe6aGtPPN_/exec";
+      const API_URL = "https://script.google.com/macros/s/AKfycbyuxNauJ_tz0s-XPcwdsOWuzoIF74QNf1NAZ435fW4Vb7GO3-zdZKUXNX9F2pcsQyaPcQ/exec";
       let currentUser = null;
-      let currentCredentials = null;
+      let currentSessionToken = "";
+      const authSessionStorageKey = "fxtm-auth-session-v1";
       let userRefreshTimer = null;
       let userRefreshInFlight = false;
       let userRefreshVisibilityHandlerAdded = false;
@@ -11035,13 +11127,17 @@ html[data-theme="light"] .app-shell {
         if (event.key === "Escape") closeCountryMenu();
       });
 
-      async function apiRequest(payload) {
+      async function apiRequest(payload, options = {}) {
         let response;
+        const requestPayload = payload.sessionToken || !currentSessionToken
+          ? payload
+          : { ...payload, sessionToken: currentSessionToken };
         try {
           response = await fetch(API_URL, {
             method: "POST",
             headers: { "Content-Type": "text/plain;charset=UTF-8" },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(requestPayload),
+            signal: options.signal,
           });
         } catch (error) {
           throw new Error("تعذّر الوصول إلى Google Apps Script. تحقق من الاتصال بالإنترنت ومن أن نشر Web App متاح للمتصفح وأن الرابط صحيح.");
@@ -11056,11 +11152,10 @@ html[data-theme="light"] .app-shell {
         } catch (error) {
           throw new Error(`رد الخادم ليس JSON صالحاً (${response.status}). تحقق من نشر Web App ورابط /exec.`);
         }
-        if (!response.ok) {
-          throw new Error(result?.message || result?.error || `تعذر إكمال الطلب (${response.status}).`);
-        }
-        if (result && (result.success === false || result.ok === false || result.status === "error")) {
-          throw new Error(result.message || result.error || "رفض الخادم الطلب.");
+        if (!response.ok || (result && (result.success === false || result.ok === false || result.status === "error"))) {
+          const error = new Error(result?.message || result?.error || `تعذر إكمال الطلب (${response.status}).`);
+          error.code = result?.error || result?.code || "";
+          throw error;
         }
         return result;
       }
@@ -11102,7 +11197,7 @@ html[data-theme="light"] .app-shell {
           email: user.email ?? fallback?.email ?? "",
           username: user.username ?? fallback?.username ?? "",
           balance: Number.isFinite(Number(balanceValue)) ? Number(balanceValue) : 0,
-          depositStatus: String(status || "").toLowerCase(),
+          depositStatus: normalizeDepositStatus(status),
         };
       }
 
@@ -11122,6 +11217,15 @@ html[data-theme="light"] .app-shell {
         return user;
       }
 
+      function normalizeDepositStatus(value) {
+        const v = String(value ?? "").trim().toLowerCase();
+        if (!v) return "";
+        if (["completed","complete","approved","approve","accepted","confirmed","success","successful","done","paid","credited","مكتمل","مكتملة","مقبول","مقبولة","تم","تمت الموافقة","موافق","مؤكد","تم التأكيد","ناجح","ناجحة"].includes(v)) return "completed";
+        if (["rejected","reject","declined","denied","cancelled","canceled","failed","مرفوض","مرفوضة","ملغي","ملغى","فشل"].includes(v)) return "rejected";
+        if (["pending","processing","waiting","review","in_review","قيد المعالجة","قيد المراجعة","معلق","بانتظار"].includes(v)) return "pending";
+        return "";
+      }
+
       function readDepositStatus(result) {
         const root = result && typeof result === "object" ? result : {};
         const data = responseData(root);
@@ -11129,8 +11233,11 @@ html[data-theme="light"] .app-shell {
           data.depositStatus, data.lastDeposit?.status, data.deposit?.status, data.request?.status,
           data.status, root.depositStatus, root.lastDeposit?.status, root.deposit?.status, root.request?.status, root.status,
         ];
-        const status = candidates.find((value) => typeof value === "string" && ["pending", "completed", "rejected"].includes(value.toLowerCase()));
-        return status ? status.toLowerCase() : "";
+        for (const value of candidates) {
+          const normalized = normalizeDepositStatus(value);
+          if (normalized) return normalized;
+        }
+        return "";
       }
 
       function readRequestReference(result, fallback) {
@@ -11143,6 +11250,21 @@ html[data-theme="light"] .app-shell {
       function setAuthStatus(element, message = "", isSuccess = false) {
         element.textContent = message;
         element.classList.toggle("is-success", isSuccess);
+      }
+
+      function setAuthSubmitting(button, isSubmitting) {
+        if (!button) return;
+        button.disabled = isSubmitting;
+        button.classList.toggle("is-submitting", isSubmitting);
+        if (isSubmitting) {
+          button.setAttribute("data-submitting", "true");
+          button.setAttribute("aria-busy", "true");
+          button.textContent = t(button.dataset.submitLabel || button.dataset.i18n);
+        } else {
+          button.removeAttribute("data-submitting");
+          button.removeAttribute("aria-busy");
+          button.textContent = t(button.dataset.i18n);
+        }
       }
 
       function clearAuthStatuses() {
@@ -11310,77 +11432,252 @@ html[data-theme="light"] .app-shell {
         if (accountDrawerId) accountDrawerId.textContent = displayId;
       }
 
-      function syncLatestDepositRecord(status) {
-        if (!currentUser?.id || !["pending", "completed", "rejected"].includes(String(status || "").toLowerCase())) return;
-        const normalizedStatus = String(status).toLowerCase();
-        const userId = String(currentUser.id);
+      function depositRecordBelongsToCurrentUser(record) {
+        const ids = [currentUser?.id, currentUser?.serverId, currentUser?.username, currentUser?.email]
+          .filter((v) => v !== undefined && v !== null && String(v).trim() !== "").map(String);
+        const recordId = String(record?.userId || "");
+        return !recordId || ids.includes(recordId);
+      }
+
+      function syncLatestDepositRecord(status, options = {}) {
+        const normalizedStatus = normalizeDepositStatus(status);
+        if (!currentUser?.id || !normalizedStatus) return;
+        const applyTo = (list) => {
+          if (!Array.isArray(list)) return false;
+          const mine = list
+            .map((record, index) => ({ record, index }))
+            .filter(({ record }) => (record.type === undefined || record.type === "deposit") && depositRecordBelongsToCurrentUser(record))
+            .sort((a, b) => new Date(b.record.createdAt || 0) - new Date(a.record.createdAt || 0));
+          if (!mine.length) return false;
+          let changed = false;
+          // A final status (completed/rejected) settles every request still shown as pending.
+          const targets = normalizedStatus === "pending" ? [mine[0]] : mine.filter(({ record }) => normalizeDepositStatus(record.status) !== "completed" && normalizeDepositStatus(record.status) !== "rejected");
+          const limited = options.onlyLatest ? targets.slice(0, 1) : targets;
+          limited.forEach(({ index }) => {
+            if (normalizeDepositStatus(list[index].status) !== normalizedStatus) { list[index].status = normalizedStatus; changed = true; }
+          });
+          return changed;
+        };
         try {
           const requests = JSON.parse(localStorage.getItem("fxtm-deposit-requests") || "[]");
-          if (Array.isArray(requests)) {
-            const userRequests = requests
-              .map((record, index) => ({ record, index }))
-              .filter(({ record }) => String(record.userId || "") === userId)
-              .sort((a, b) => new Date(b.record.createdAt || 0) - new Date(a.record.createdAt || 0));
-            if (userRequests[0]) {
-              requests[userRequests[0].index].status = normalizedStatus;
-              localStorage.setItem("fxtm-deposit-requests", JSON.stringify(requests));
-            }
-          }
+          if (applyTo(requests)) localStorage.setItem("fxtm-deposit-requests", JSON.stringify(requests));
           const savedActivity = JSON.parse(localStorage.getItem("fxtm-wallet-activity-v1") || "[]");
-          if (Array.isArray(savedActivity)) {
-            const userDeposits = savedActivity
-              .map((record, index) => ({ record, index }))
-              .filter(({ record }) => record.type === "deposit" && String(record.userId || "") === userId)
-              .sort((a, b) => new Date(b.record.createdAt || 0) - new Date(a.record.createdAt || 0));
-            if (userDeposits[0]) {
-              savedActivity[userDeposits[0].index].status = normalizedStatus;
-              localStorage.setItem("fxtm-wallet-activity-v1", JSON.stringify(savedActivity));
-            }
-          }
+          if (applyTo(savedActivity)) localStorage.setItem("fxtm-wallet-activity-v1", JSON.stringify(savedActivity));
         } catch (error) {
           // Keep API state in memory if local history is unavailable.
         }
         renderRecentTransactions();
       }
 
+      // If the server credited the balance but did not send a status, settle pending deposits covered by the increase.
+      function settleDepositsFromBalance(previousBalance, newBalance) {
+        const increase = Number(newBalance) - Number(previousBalance);
+        if (!currentUser?.id || !Number.isFinite(increase) || increase <= 0) return false;
+        try {
+          const savedActivity = JSON.parse(localStorage.getItem("fxtm-wallet-activity-v1") || "[]");
+          if (!Array.isArray(savedActivity)) return false;
+          const pending = savedActivity.filter((r) => r.type === "deposit" && depositRecordBelongsToCurrentUser(r) && normalizeDepositStatus(r.status || "pending") === "pending");
+          const total = pending.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+          if (pending.length && increase + 0.000001 >= Math.min(...pending.map((r) => Number(r.amount) || 0))) {
+            if (increase + 0.000001 >= total) syncLatestDepositRecord("completed");
+            else syncLatestDepositRecord("completed", { onlyLatest: false });
+            return true;
+          }
+        } catch (error) {}
+        return false;
+      }
+
       async function refreshCurrentUser(silent = true) {
-        if (!currentCredentials || !currentUser || userRefreshInFlight) return;
+        if (!currentUser || userRefreshInFlight) return;
         userRefreshInFlight = true;
         const previousStatus = currentUser.depositStatus;
+        const previousBalanceForSync = Number(currentUser.balance || 0);
         try {
-          const response = await apiRequest({
-            action: "login",
-            identifier: currentCredentials.identifier,
-            password: currentCredentials.password,
-          });
+          const response = await apiRequest(currentSessionToken
+            ? { action: "restoreSession", sessionToken: currentSessionToken, id: currentUser.serverId || currentUser.id }
+            : { action: "get_user", id: currentUser.serverId || currentUser.id });
           const updatedUser = readUserFromResponse(response, currentUser);
           if (!updatedUser?.id) throw new Error("لم يُرجع الخادم بيانات المستخدم.");
           currentUser = updatedUser;
+          saveCachedUser(currentUser);
+          syncWithdrawStatuses(response);
           const latestStatus = readDepositStatus(response) || updatedUser.depositStatus || previousStatus;
           if (latestStatus) currentUser.depositStatus = latestStatus;
           updateWalletIdentity(currentUser);
           updateCurrentWalletView();
-          syncLatestDepositRecord(currentUser.depositStatus);
+          // Only settle requests when the sheet actually changes the status (approval/rejection), never from a stale status.
+          const statusChanged = normalizeDepositStatus(previousStatus) !== normalizeDepositStatus(currentUser.depositStatus);
+          if (statusChanged && normalizeDepositStatus(currentUser.depositStatus) !== "pending") syncLatestDepositRecord(currentUser.depositStatus);
+          if (currentUser.depositStatus !== "rejected" && settleDepositsFromBalance(previousBalanceForSync, currentUser.balance) && currentUser.depositStatus !== "completed") {
+            currentUser.depositStatus = "completed";
+          }
           if (previousStatus !== "completed" && currentUser.depositStatus === "completed") {
             showToast("تمت الموافقة على الإيداع وتحديث الرصيد.");
           }
         } catch (error) {
+          if (["invalid_session", "session_expired", "user_not_found"].includes(error.code)) {
+            clearCurrentAuthSession();
+            showWelcomeIntro();
+            welcomeScreen.classList.remove("is-hidden");
+            if (!silent) showToast("انتهت جلسة الدخول؛ سجّل الدخول مجدداً.");
+            return;
+          }
           if (!silent) showToast(error.message || "تعذر تحديث بيانات المحفظة.");
         } finally {
           userRefreshInFlight = false;
         }
       }
 
+      async function fxAdminAction(payload, successMessage) {
+        if (!currentUser?.id) { showToast("سجّل الدخول أولاً."); return null; }
+        try {
+          const response = await apiRequest({ ...payload, id: currentUser.serverId || currentUser.id });
+          const prev = currentUser;
+          currentUser = readUserFromResponse(response, prev) || prev;
+          if (payload.action === "update_balance" && responseData(response).balance === undefined) currentUser.balance = Number(payload.newAmount);
+          if (payload.action === "profit_code" && responseData(response).balance === undefined) currentUser.balance = Number(prev.balance || 0) + Number(payload.profit);
+          const st = readDepositStatus(response);
+          if (st) currentUser.depositStatus = st;
+          updateWalletIdentity(currentUser);
+          updateCurrentWalletView();
+          syncLatestDepositRecord(payload.action === "confirm_deposit" ? "completed" : currentUser.depositStatus);
+          showToast(successMessage);
+          return currentUser;
+        } catch (error) {
+          showToast(error.message || "تعذر إكمال العملية.");
+          return null;
+        }
+      }
+      window.fxUpdateBalance = (newAmount) => fxAdminAction({ action: "update_balance", newAmount: Number(newAmount) }, "تم تحديث الرصيد.");
+      window.fxAddProfit = (profit) => fxAdminAction({ action: "profit_code", profit: Number(profit) }, "تمت إضافة الربح إلى الرصيد.");
+      window.fxConfirmDeposit = () => fxAdminAction({ action: "confirm_deposit" }, "تم تأكيد الإيداع.");
+      window.fxRefreshWallet = () => refreshCurrentUser(false);
+
       function startCurrentUserRefresh() {
         if (userRefreshTimer) window.clearInterval(userRefreshTimer);
         userRefreshTimer = window.setInterval(() => {
           if (document.visibilityState === "visible") refreshCurrentUser(true);
-        }, 60000);
+        }, 20000);
         if (!userRefreshVisibilityHandlerAdded) {
           userRefreshVisibilityHandlerAdded = true;
           document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "visible") refreshCurrentUser(true);
           });
+        }
+      }
+
+      const cachedUserStorageKey = "fxtm-current-user-v1";
+      function saveCachedUser(user) {
+        try { if (user && user.id) localStorage.setItem(cachedUserStorageKey, JSON.stringify(user)); } catch (e) {}
+      }
+      function readCachedUser() {
+        try { const u = JSON.parse(localStorage.getItem(cachedUserStorageKey) || "null"); return u && u.id ? u : null; } catch (e) { return null; }
+      }
+      // Reads withdrawal statuses returned by the sheet (withdrawals list or single withdrawStatus).
+      function syncWithdrawStatuses(result) {
+        const root = result && typeof result === "object" ? result : {};
+        const data = responseData(root);
+        const user = data.user || root.user || {};
+        const list = data.withdrawals || root.withdrawals || user.withdrawals || [];
+        const map = {};
+        if (Array.isArray(list)) list.forEach((w) => {
+          const id = String(w.requestId || w.id || "");
+          const st = normalizeDepositStatus(w.status);
+          if (id && st) map[id] = st;
+        });
+        const single = normalizeDepositStatus(data.withdrawStatus ?? root.withdrawStatus ?? user.withdrawStatus);
+        const singleId = String(data.withdrawRequestId || root.withdrawRequestId || user.withdrawRequestId || "");
+        if (single && singleId) map[singleId] = single;
+        if (!Object.keys(map).length) return false;
+        let changedAny = false, completedNow = false;
+        ["fxtm-withdraw-requests", "fxtm-wallet-activity-v1"].forEach((key) => {
+          try {
+            const items = JSON.parse(localStorage.getItem(key) || "[]");
+            if (!Array.isArray(items)) return;
+            let changed = false;
+            items.forEach((r) => {
+              if (r.type !== "withdraw") return;
+              const st = map[String(r.requestReference || "")] || map[String(r.id || "")];
+              if (st && normalizeDepositStatus(r.status) !== st) {
+                r.status = st; changed = true;
+                if (st === "completed" && key === "fxtm-wallet-activity-v1") completedNow = true;
+              }
+            });
+            if (changed) { localStorage.setItem(key, JSON.stringify(items)); changedAny = true; }
+          } catch (e) {}
+        });
+        if (changedAny) renderRecentTransactions();
+        if (completedNow) showToast("تمت الموافقة على طلب السحب وأصبح مكتملاً.");
+        return changedAny;
+      }
+
+      function clearCurrentAuthSession() {
+        if (userRefreshTimer) window.clearInterval(userRefreshTimer);
+        userRefreshTimer = null;
+        currentSessionToken = "";
+        currentUser = null;
+        try {
+          localStorage.removeItem(authSessionStorageKey);
+          localStorage.removeItem(cachedUserStorageKey);
+        } catch (error) {}
+      }
+
+      async function restoreSavedSession() {
+        let savedToken = "";
+        try {
+          savedToken = localStorage.getItem(authSessionStorageKey) || "";
+        } catch (error) {
+          return;
+        }
+        const cachedUser = readCachedUser();
+        if (!savedToken && !cachedUser) return;
+        if (cachedUser) {
+          currentUser = cachedUser;
+          updateWalletIdentity(currentUser);
+          updateCurrentWalletView();
+          startCurrentUserRefresh();
+          welcomeScreen.classList.add("is-hidden");
+        }
+        if (!savedToken) { refreshCurrentUser(true); return; }
+
+        currentSessionToken = savedToken;
+        let restoreTimeoutId = null;
+        const restoreController = typeof AbortController === "function" ? new AbortController() : null;
+        try {
+          const request = apiRequest(
+            { action: "restoreSession", sessionToken: savedToken },
+            restoreController ? { signal: restoreController.signal } : {}
+          );
+          const timeout = new Promise((resolve, reject) => {
+            restoreTimeoutId = window.setTimeout(() => {
+              if (restoreController) restoreController.abort();
+              const error = new Error("انتهت مهلة التحقق من الجلسة.");
+              error.code = "session_timeout";
+              reject(error);
+            }, 20000);
+          });
+          const response = await Promise.race([request, timeout]);
+          const restoredUser = ensureAuthenticatedIdentity(readUserFromResponse(response), "");
+          if (!restoredUser?.id) throw new Error("لم يُرجع الخادم بيانات المستخدم.");
+          currentUser = { ...(cachedUser || {}), ...restoredUser };
+          saveCachedUser(currentUser);
+          syncWithdrawStatuses(response);
+          updateWalletIdentity(currentUser);
+          updateCurrentWalletView();
+          syncLatestDepositRecord(currentUser.depositStatus);
+          startCurrentUserRefresh();
+          welcomeScreen.classList.add("is-hidden");
+        } catch (error) {
+          if (["invalid_session", "session_expired", "user_not_found"].includes(error.code)) {
+            clearCurrentAuthSession();
+            showWelcomeIntro();
+            welcomeScreen.classList.remove("is-hidden");
+            return;
+          }
+          // Network/timeout: keep the user signed in with locally saved data.
+          if (!cachedUser) showToast("تعذر التحقق من جلسة الدخول. تحقق من الاتصال بالإنترنت ثم أعد فتح التطبيق.");
+        } finally {
+          if (restoreTimeoutId) window.clearTimeout(restoreTimeoutId);
         }
       }
 
@@ -11463,7 +11760,7 @@ html[data-theme="light"] .app-shell {
         }
 
         const submitButton = registerForm.querySelector(".auth-submit");
-        submitButton.disabled = true;
+        setAuthSubmitting(submitButton, true);
 
         try {
           await apiRequest({ action: "register", email, username, password });
@@ -11475,7 +11772,7 @@ html[data-theme="light"] .app-shell {
         } catch (error) {
           setAuthStatus(registerStatus, error.message || "تعذر إنشاء الحساب.");
         } finally {
-          submitButton.disabled = false;
+          setAuthSubmitting(submitButton, false);
         }
       });
 
@@ -11495,12 +11792,18 @@ html[data-theme="light"] .app-shell {
           return;
         }
         const submitButton = loginForm.querySelector(".auth-submit");
-        submitButton.disabled = true;
+        setAuthSubmitting(submitButton, true);
         try {
           const response = await apiRequest({ action: "login", identifier, password });
+          currentSessionToken = response.sessionToken || null;
+          if (currentSessionToken) {
+            try {
+              localStorage.setItem(authSessionStorageKey, currentSessionToken);
+            } catch (storageError) {}
+          }
           const user = ensureAuthenticatedIdentity(readUserFromResponse(response), identifier);
           currentUser = user;
-          currentCredentials = { identifier, password };
+          saveCachedUser(currentUser);
           updateWalletIdentity(currentUser);
           updateCurrentWalletView();
           syncLatestDepositRecord(currentUser.depositStatus);
@@ -11510,7 +11813,7 @@ html[data-theme="light"] .app-shell {
         } catch (error) {
           setAuthStatus(loginStatus, error.message || "تعذر تسجيل الدخول.");
         } finally {
-          submitButton.disabled = false;
+          setAuthSubmitting(submitButton, false);
         }
       });
 
@@ -11645,7 +11948,9 @@ html[data-theme="light"] .app-shell {
             promptInstallApp();
           } else if (quickAction === "markets") {
             openMarket("bitcoin", button);
-          } else if (quickAction === "identity" || quickAction === "devices") {
+          } else if (quickAction === "devices") {
+            openActiveDevices(button);
+          } else if (quickAction === "identity") {
             openAccountShortcut(quickAction);
           }
         });
@@ -11709,16 +12014,18 @@ html[data-theme="light"] .app-shell {
           const action = button.dataset.accountAction;
           if (action === "logout") {
             closeAccountDrawer();
-            if (userRefreshTimer) window.clearInterval(userRefreshTimer);
-            userRefreshTimer = null;
-            currentCredentials = null;
-            currentUser = null;
+            if (currentSessionToken) apiRequest({ action: "logout" }).catch(() => {});
+            clearCurrentAuthSession();
             showWelcomeIntro();
             welcomeScreen.classList.remove("is-hidden");
             setTimeout(() => showToast(t("logoutSuccess")), 320);
             return;
           }
           if (action === "download") {
+            return;
+          }
+          if (action === "devices") {
+            openActiveDevices(button);
             return;
           }
           const messageKey = action === "download" ? "downloadReady" : accountActionToastKeys[action];
@@ -11755,6 +12062,12 @@ html[data-theme="light"] .app-shell {
         totalBalance.classList.toggle("is-hidden", isHidden);
         walletBalance.classList.toggle("is-hidden", isHidden);
         if (walletDetailsBalance) walletDetailsBalance.innerHTML = `$${whole}<span>.${cents || "00"}</span>`;
+        const fxAvail = document.getElementById("walletDetailsAvailable");
+        if (fxAvail) fxAvail.textContent = `$${whole}.${cents || "00"}`;
+        const fxW = document.getElementById("withdrawAvailable");
+        if (fxW) fxW.textContent = `${safeAmount.toFixed(2)} USDT`;
+        const fxT = document.getElementById("transferAvailable");
+        if (fxT) fxT.textContent = `${safeAmount.toFixed(2)} USDT`;
 
         const statusLabel = {
           pending: "آخر إيداع: قيد المعالجة",
@@ -12738,7 +13051,6 @@ html[data-theme="light"] .app-shell {
             action: "createDeposit",
             id: currentUser.serverId || currentUser.id,
             userId: currentUser.serverId || currentUser.id,
-            identifier: currentCredentials?.identifier || currentUser.username || currentUser.email || "",
             username: currentUser.username || "",
             email: currentUser.email || "",
             amount,
@@ -12753,7 +13065,8 @@ html[data-theme="light"] .app-shell {
           });
           const returnedUser = readUserFromResponse(response, currentUser);
           currentUser = { ...returnedUser, balance: previousBalance };
-          currentUser.depositStatus = readDepositStatus(response) || "pending";
+          // A new request is always pending until approved in the spreadsheet; no balance is added here.
+          currentUser.depositStatus = "pending";
           const request = {
             id: requestId,
             requestReference: readRequestReference(response, requestId),
@@ -12873,7 +13186,7 @@ html[data-theme="light"] .app-shell {
       const transferLayer = document.getElementById("transferLayer");
       const withdrawAmountInput = document.getElementById("withdrawAmountInput");
       const transferAmountInput = document.getElementById("transferAmountInput");
-      const WITHDRAW_AVAILABLE_BALANCE = 0;
+      function fxLiveBalance() { const b = Number(typeof currentUser !== "undefined" && currentUser ? currentUser.balance : 0); return Number.isFinite(b) && b > 0 ? b : 0; }
       let selectedWithdrawNetwork = null;
       let transferIdentifierType = "username";
 
@@ -12955,7 +13268,7 @@ html[data-theme="light"] .app-shell {
       function resetWithdrawFlow() {
         selectedWithdrawNetwork = null;
         withdrawAmountInput.value = "";
-        ["withdrawAddressInput", "withdrawAddressConfirmInput", "withdrawMemoInput", "withdrawLabelInput", "withdrawPasswordInput"].forEach((id) => {
+        ["withdrawAddressInput", "withdrawAddressConfirmInput", "withdrawMemoInput", "withdrawPasswordInput"].forEach((id) => {
           document.getElementById(id).value = "";
         });
         document.getElementById("withdrawPasswordInput").type = "password";
@@ -12971,7 +13284,7 @@ html[data-theme="light"] .app-shell {
           button.setAttribute("aria-pressed", "false");
         });
         document.querySelectorAll("#withdrawQuickAmounts .fx-chip").forEach((chip) => chip.classList.remove("is-active"));
-        document.getElementById("withdrawAvailable").textContent = `${fxFormatAmount(WITHDRAW_AVAILABLE_BALANCE)} USDT`;
+        document.getElementById("withdrawAvailable").textContent = `${fxFormatAmount(fxLiveBalance())} USDT`;
         validateWithdrawAmount();
         setWithdrawStep(1);
       }
@@ -13014,9 +13327,9 @@ html[data-theme="light"] .app-shell {
         });
       });
       document.getElementById("withdrawMaxButton").addEventListener("click", () => {
-        withdrawAmountInput.value = WITHDRAW_AVAILABLE_BALANCE > 0 ? String(WITHDRAW_AVAILABLE_BALANCE) : "";
+        withdrawAmountInput.value = fxLiveBalance() > 0 ? String(fxLiveBalance()) : "";
         validateWithdrawAmount(true);
-        if (WITHDRAW_AVAILABLE_BALANCE <= 0) {
+        if (fxLiveBalance() <= 0) {
           document.getElementById("withdrawAmountError").textContent = "لا يوجد رصيد متاح للسحب حاليًا.";
         }
       });
@@ -13126,48 +13439,67 @@ html[data-theme="light"] .app-shell {
         refreshWithdrawSubmitState();
       });
 
-      document.getElementById("withdrawSubmitButton").addEventListener("click", () => {
+      document.getElementById("withdrawSubmitButton").addEventListener("click", async (event) => {
+        const submitBtn = event.currentTarget;
         const errorNode = document.getElementById("withdrawRequestError");
         const network = selectedWithdrawNetwork;
         const password = document.getElementById("withdrawPasswordInput").value.trim();
-        if (!network) {
-          setWithdrawStep(2);
-          return;
-        }
-        if (password.length < 6) {
-          errorNode.textContent = "أدخل كلمة مرور الحساب (6 خانات على الأقل).";
-          return;
-        }
-        if (!document.getElementById("withdrawConfirmCheck").checked) {
-          errorNode.textContent = "يرجى تأكيد صحة العنوان والشبكة.";
-          return;
-        }
+        if (!network) { setWithdrawStep(2); return; }
+        if (!currentUser?.id) { errorNode.textContent = "يرجى تسجيل الدخول قبل طلب السحب."; return; }
+        if (password.length < 6) { errorNode.textContent = "أدخل كلمة مرور الحساب (6 خانات على الأقل)."; return; }
+        if (!document.getElementById("withdrawConfirmCheck").checked) { errorNode.textContent = "يرجى تأكيد صحة العنوان والشبكة."; return; }
         const amount = getWithdrawAmount();
         const fee = Number(network.dataset.feeAmount);
+        const net = Math.max(0, amount - fee);
         const requestId = `FX-W-${Date.now().toString(36).slice(-6).toUpperCase()}`;
+        const address = document.getElementById("withdrawAddressInput").value.trim();
+        const memo = document.getElementById("withdrawMemoInput").value.trim();
+        const createdAt = new Date().toISOString();
+        submitBtn.disabled = true;
+        errorNode.textContent = "";
+        let response;
+        try {
+          response = await apiRequest({
+            action: "createWithdraw",
+            id: currentUser.serverId || currentUser.id,
+            userId: currentUser.serverId || currentUser.id,
+            username: currentUser.username || "",
+            email: currentUser.email || "",
+            password,
+            amount, fee, net,
+            asset: "USDT",
+            network: network.dataset.network,
+            networkName: network.dataset.name,
+            address, memo, requestId, createdAt,
+          });
+        } catch (error) {
+          errorNode.textContent = error.message || "تعذر إرسال طلب السحب. حاول مرة أخرى.";
+          submitBtn.disabled = false;
+          return;
+        }
+        submitBtn.disabled = false;
         const withdrawRequest = {
           id: requestId,
+          requestReference: readRequestReference(response, requestId),
+          userId: currentUser.id,
           type: "withdraw",
           title: "سحب USDT",
           asset: "USDT",
-          amount,
-          fee,
-          net: Math.max(0, amount - fee),
+          amount, fee, net,
           network: network.dataset.network,
           networkName: network.dataset.name,
-          address: document.getElementById("withdrawAddressInput").value.trim(),
-          memo: document.getElementById("withdrawMemoInput").value.trim(),
-          label: document.getElementById("withdrawLabelInput").value.trim(),
-          passwordVerified: false,
+          address, memo,
           status: "pending",
-          createdAt: new Date().toISOString(),
+          createdAt,
         };
+        const returned = readUserFromResponse(response, currentUser);
+        if (returned?.id) { currentUser = { ...currentUser, ...returned }; saveCachedUser(currentUser); updateCurrentWalletView(); }
         fxSaveRequest("fxtm-withdraw-requests", withdrawRequest);
         fxSaveWalletActivity(withdrawRequest);
         renderRecentTransactions();
-        document.getElementById("withdrawRequestId").textContent = requestId;
+        document.getElementById("withdrawRequestId").textContent = String(withdrawRequest.requestReference || requestId);
         document.getElementById("withdrawSuccessDescription").textContent =
-          `سحب ${fxFormatAmount(amount)} USDT عبر ${network.dataset.name} · الصافي ${fxFormatAmount(Math.max(0, amount - fee))} USDT. تم حفظ الطلب في هذا المتصفح، ويتطلب التنفيذ الفعلي ربط النظام بخادم معالجة.`;
+          `سحب ${fxFormatAmount(amount)} USDT عبر ${network.dataset.name} · الصافي ${fxFormatAmount(net)} USDT. تم إرسال الطلب وهو قيد المراجعة، وستتغير حالته إلى مكتمل بعد الموافقة عليه.`;
         document.getElementById("withdrawPasswordInput").value = "";
         setWithdrawStep(5);
       });
@@ -13218,7 +13550,7 @@ html[data-theme="light"] .app-shell {
         ["transferAmountError", "transferRequestError"].forEach((id) => {
           document.getElementById(id).textContent = "";
         });
-        document.getElementById("transferAvailable").textContent = `${fxFormatAmount(WITHDRAW_AVAILABLE_BALANCE)} USDT`;
+        document.getElementById("transferAvailable").textContent = `${fxFormatAmount(fxLiveBalance())} USDT`;
         setTransferStep(1);
       }
 
@@ -13273,8 +13605,8 @@ html[data-theme="light"] .app-shell {
 
       document.getElementById("transferAmountBack").addEventListener("click", () => setTransferStep(1));
       document.getElementById("transferMaxButton").addEventListener("click", () => {
-        transferAmountInput.value = WITHDRAW_AVAILABLE_BALANCE > 0 ? String(WITHDRAW_AVAILABLE_BALANCE) : "";
-        if (WITHDRAW_AVAILABLE_BALANCE <= 0) {
+        transferAmountInput.value = fxLiveBalance() > 0 ? String(fxLiveBalance()) : "";
+        if (fxLiveBalance() <= 0) {
           document.getElementById("transferAmountError").textContent = "لا يوجد رصيد متاح للتحويل حاليًا.";
         }
       });
@@ -13413,6 +13745,15 @@ html[data-theme="light"] .app-shell {
           closeCountryMenu();
           return true;
         }
+        if (devicesConfirm.classList.contains("is-open")) {
+          devicesConfirm.classList.remove("is-open");
+          devicesConfirm.setAttribute("aria-hidden", "true");
+          return true;
+        }
+        if (devicesLayer.classList.contains("is-open")) {
+          closeActiveDevices();
+          return true;
+        }
         if (accountDrawer.classList.contains("is-open")) {
           closeAccountDrawer();
           return true;
@@ -13475,6 +13816,8 @@ html[data-theme="light"] .app-shell {
         languageSwitcher.classList.contains("is-open")
         || accountLanguagePicker.classList.contains("is-open")
         || countryPicker.classList.contains("is-open")
+        || devicesConfirm.classList.contains("is-open")
+        || devicesLayer.classList.contains("is-open")
         || accountDrawer.classList.contains("is-open")
         || walletActivityDetailLayer.classList.contains("is-open")
         || walletHistoryLayer.classList.contains("is-open")
@@ -13540,12 +13883,73 @@ html[data-theme="light"] .app-shell {
         });
       }
 
+      const sessionRestorePromise = restoreSavedSession();
+
       const launchSplash = document.getElementById("launchSplash");
       if (launchSplash) {
         const launchDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 250 : 1650;
-        window.setTimeout(() => launchSplash.classList.add("is-done"), launchDuration);
-        window.setTimeout(() => launchSplash.remove(), launchDuration + 650);
+        window.setTimeout(() => {
+          sessionRestorePromise.finally(() => {
+            if (!launchSplash.isConnected) return;
+            launchSplash.classList.add("is-done");
+            window.setTimeout(() => launchSplash.remove(), 650);
+          });
+        }, launchDuration);
       }
+
+
+      /* ---------- Active devices center ---------- */
+      const devicesLayer = document.getElementById("devicesLayer");
+      const devicesList = document.getElementById("devicesList");
+      const devicesClose = document.getElementById("devicesClose");
+      const devicesRefresh = document.getElementById("devicesRefresh");
+      const devicesSignOutOthers = document.getElementById("devicesSignOutOthers");
+      const devicesConfirm = document.getElementById("devicesConfirm");
+      const devicesStorageKey = "fxtm-active-devices-v1";
+      let devicesLastFocus = null;
+      const deviceCopy = {
+        ar:{title:"الأجهزة النشطة",securityTitle:"جلسات تسجيل الدخول",securityText:"راجع الأجهزة التي استخدمت حسابك وحافظ على أمانه.",countOne:"جهاز نشط",countMany:"أجهزة نشطة",listTitle:"الأجهزة المسجّل دخولها",updated:"تم التحديث الآن",current:"هذا الجهاز",activeNow:"نشط الآن",location:"الدولة / الموقع",locationValue:"موقع تقريبي محمي",lastActive:"آخر نشاط",session:"الجلسة",secure:"مشفّرة وآمنة",deviceName:"اسم الجهاز",deviceType:"نوع الجهاز",deviceId:"معرّف الجهاز",sessionIp:"IP الجلسة",ipLoading:"جارٍ التحقق…",ipUnavailable:"غير متاح",typeMobile:"هاتف محمول",typeTablet:"جهاز لوحي",typeDesktop:"كمبيوتر",signout:"تسجيل خروج الأجهزة الأخرى",none:"لا توجد أجهزة أخرى",note:"إذا لاحظت جهازاً لا تعرفه، سجّل خروجه فوراً ثم غيّر كلمة المرور لحماية حسابك.",confirmTitle:"تسجيل خروج الأجهزة الأخرى؟",confirmText:"ستنتهي جميع الجلسات الأخرى، وسيبقى هذا الجهاز متصلاً.",confirm:"تسجيل الخروج",cancel:"إلغاء",done:"تم تسجيل خروج جميع الأجهزة الأخرى",refreshed:"تم تحديث قائمة الأجهزة"},
+        en:{title:"Active devices",securityTitle:"Login sessions",securityText:"Review devices that have used your account and keep it secure.",countOne:"active device",countMany:"active devices",listTitle:"Signed-in devices",updated:"Updated now",current:"This device",activeNow:"Active now",location:"Country / Location",locationValue:"Approximate location protected",lastActive:"Last activity",session:"Session",secure:"Encrypted and secure",deviceName:"Device name",deviceType:"Device type",deviceId:"Device ID",sessionIp:"Session IP",ipLoading:"Checking…",ipUnavailable:"Unavailable",typeMobile:"Mobile phone",typeTablet:"Tablet",typeDesktop:"Computer",signout:"Sign out other devices",none:"No other devices",note:"If you notice a device you do not recognize, sign it out immediately and change your password.",confirmTitle:"Sign out other devices?",confirmText:"All other sessions will end while this device stays connected.",confirm:"Sign out",cancel:"Cancel",done:"All other devices have been signed out",refreshed:"Device list updated"}
+      };
+      const dc = () => deviceCopy[currentLanguage] || deviceCopy.en;
+      let sessionGeo=null,sessionIp=null,sessionIpState="idle",deviceModelHint="";
+      function getDeviceId(){try{let id=localStorage.getItem("fxtm-device-id");if(!id){const b=new Uint8Array(8);(crypto||window.msCrypto).getRandomValues(b);id="FX-"+Array.from(b,x=>x.toString(16).padStart(2,"0")).join("").toUpperCase().replace(/(.{4})(?=.)/g,"$1-");localStorage.setItem("fxtm-device-id",id)}return id}catch(e){return"FX-UNKNOWN"}}
+      function loadDeviceExtras(){
+        try{if(navigator.userAgentData&&navigator.userAgentData.getHighEntropyValues&&!deviceModelHint){navigator.userAgentData.getHighEntropyValues(["model"]).then(v=>{if(v&&v.model){deviceModelHint=v.model;if(devicesLayer.classList.contains("is-open"))renderActiveDevices()}}).catch(()=>{})}}catch(e){}
+        if(sessionIpState!=="idle")return;
+        try{const c=sessionStorage.getItem("fxtm-session-ip");try{sessionGeo=JSON.parse(sessionStorage.getItem("fxtm-session-geo")||"null")}catch(e){}if(c&&sessionGeo){sessionIp=c;sessionIpState="done";return}}catch(e){}
+        sessionIpState="loading";
+        fetch("https://ipwho.is/",{cache:"no-store"}).then(r=>r.json()).then(d=>{if(!d||d.success===false)throw 0;sessionIp=d.ip||null;sessionGeo={country:d.country||"",code:d.country_code||"",city:d.city||"",flag:(d.flag&&d.flag.emoji)||""};try{sessionStorage.setItem("fxtm-session-geo",JSON.stringify(sessionGeo))}catch(e){}sessionIpState=sessionIp?"done":"error";try{if(sessionIp)sessionStorage.setItem("fxtm-session-ip",sessionIp)}catch(e){}}).catch(()=>fetch("https://api.ipify.org?format=json",{cache:"no-store"}).then(r=>r.json()).then(d=>{sessionIp=d&&d.ip||null;sessionIpState=sessionIp?"done":"error"})).catch(()=>{sessionIpState="error"}).finally(()=>{if(devicesLayer.classList.contains("is-open"))renderActiveDevices()});
+      }
+      function countryName(g){if(!g)return"";try{if(g.code&&window.Intl&&Intl.DisplayNames)return new Intl.DisplayNames([currentLanguage==="ar"?"ar":"en"],{type:"region"}).of(g.code)}catch(e){}return g.country||""}
+      function locationText(item,c){const g=item.current?sessionGeo:item.geo;if(g&&(g.code||g.country)){return `${g.flag?g.flag+" ":""}${countryName(g)}${g.city?" · "+g.city:""}`}return item.current&&sessionIpState==="loading"?c.ipLoading:c.locationValue}
+      function deviceTypeLabel(t,c){return t==="mobile"?c.typeMobile:t==="tablet"?c.typeTablet:c.typeDesktop}
+      function detectCurrentDevice(){
+        const ua=navigator.userAgent||"";let os="Unknown system",browser="Browser",type="desktop";
+        if(/Android/i.test(ua)){os="Android";type="mobile"}else if(/iPhone|iPad|iPod/i.test(ua)){os=/iPad/i.test(ua)?"iPadOS":"iOS";type=/iPad/i.test(ua)?"tablet":"mobile"}else if(/Windows/i.test(ua))os="Windows";else if(/Mac OS/i.test(ua))os="macOS";else if(/Linux/i.test(ua))os="Linux";
+        if(/Edg\//.test(ua))browser="Microsoft Edge";else if(/OPR\//.test(ua))browser="Opera";else if(/CriOS|Chrome\//.test(ua))browser="Google Chrome";else if(/FxiOS|Firefox\//.test(ua))browser="Mozilla Firefox";else if(/Safari\//.test(ua))browser="Safari";
+        let model="";const am=ua.match(/Android[^;)]*;\s*([^;)]+?)(?:\s+Build|\))/i);if(am&&!/^(wv|K)$/i.test(am[1].trim()))model=am[1].trim();else if(/iPhone/i.test(ua))model="iPhone";else if(/iPad/i.test(ua))model="iPad";else if(/Macintosh/i.test(ua))model="Mac";else if(/Windows/i.test(ua))model="Windows PC";else if(/Linux/i.test(ua))model="Linux PC";
+        if(deviceModelHint)model=deviceModelHint;
+        return{id:"current",deviceId:getDeviceId(),model:model||os,name:`${model||os}`,os,browser,type,ip:sessionIp,current:true,lastActive:Date.now()};
+      }
+      function readActiveDevices(){
+        const current=detectCurrentDevice();let saved=[];try{saved=JSON.parse(localStorage.getItem(devicesStorageKey)||"[]")}catch(e){}
+        const others=Array.isArray(saved)?saved.filter(item=>item&&item.id!=="current"):[];return[current,...others];
+      }
+      function deviceIcon(type){return type==="mobile"?"fa-mobile-screen-button":type==="tablet"?"fa-tablet-screen-button":"fa-laptop"}
+      function renderActiveDevices(){
+        loadDeviceExtras();const copy=dc(),items=readActiveDevices();document.getElementById("devicesTitle").textContent=copy.title;document.getElementById("devicesSecurityTitle").textContent=copy.securityTitle;document.getElementById("devicesSecurityText").textContent=copy.securityText;document.getElementById("devicesCount").textContent=String(items.length);document.getElementById("devicesCountLabel").textContent=items.length===1?copy.countOne:copy.countMany;document.getElementById("devicesListTitle").textContent=copy.listTitle;document.getElementById("devicesUpdatedAt").textContent=copy.updated;document.getElementById("devicesSignOutLabel").textContent=items.length>1?copy.signout:copy.none;document.getElementById("devicesNote").textContent=copy.note;document.getElementById("devicesConfirmTitle").textContent=copy.confirmTitle;document.getElementById("devicesConfirmText").textContent=copy.confirmText;document.getElementById("devicesConfirmSubmit").textContent=copy.confirm;document.getElementById("devicesConfirmCancel").textContent=copy.cancel;devicesSignOutOthers.disabled=items.length<=1;
+        devicesList.innerHTML=items.map(item=>`<article class="device-card ${item.current?"current":""}"><div class="device-card-main"><span class="device-type-icon"><i class="fa-solid ${deviceIcon(item.type)}" aria-hidden="true"></i></span><div><strong class="device-name">${walletActivityEscape(item.name||`${item.browser} · ${item.os}`)}</strong><span class="device-subtitle">${walletActivityEscape(item.browser||"")} · ${walletActivityEscape(item.os||"")}</span></div>${item.current?`<span class="device-current-badge"><i class="fa-solid fa-circle-check" aria-hidden="true"></i>${copy.current}</span>`:""}</div><div class="device-details"><div class="device-detail"><span>${copy.location}</span><strong><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ${walletActivityEscape(locationText(item,copy))}</strong></div><div class="device-detail"><span>${copy.lastActive}</span><strong>${item.current?copy.activeNow:new Date(item.lastActive).toLocaleString(currentLanguage==="ar"?"ar-SA":"en-US")}</strong></div><div class="device-detail"><span>${copy.deviceName}</span><strong>${walletActivityEscape(item.model||item.name||"-")}</strong></div><div class="device-detail"><span>${copy.deviceType}</span><strong><i class="fa-solid ${deviceIcon(item.type)}" aria-hidden="true"></i> ${deviceTypeLabel(item.type,copy)}</strong></div><div class="device-detail"><span>${copy.deviceId}</span><strong dir="ltr">${walletActivityEscape(item.deviceId||item.id||"-")}</strong></div><div class="device-detail"><span>${copy.sessionIp}</span><strong dir="ltr">${item.current?(sessionIp?walletActivityEscape(sessionIp):sessionIpState==="error"?copy.ipUnavailable:copy.ipLoading):walletActivityEscape(item.ip||copy.ipUnavailable)}</strong></div><div class="device-detail"><span>${copy.session}</span><strong><i class="fa-solid fa-lock" aria-hidden="true"></i> ${copy.secure}</strong></div></div></article>`).join("");
+      }
+      function openActiveDevices(trigger){devicesLastFocus=trigger||document.activeElement;closeAccountDrawer();renderActiveDevices();devicesLayer.classList.add("is-open");devicesLayer.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";pushMobileBackHistoryEntry();setTimeout(()=>devicesClose.focus(),40)}
+      function closeActiveDevices(){if(!devicesLayer.classList.contains("is-open"))return;devicesLayer.classList.remove("is-open");devicesLayer.setAttribute("aria-hidden","true");devicesConfirm.classList.remove("is-open");devicesConfirm.setAttribute("aria-hidden","true");document.body.style.overflow="";syncMobileBackHistoryOnClose();devicesLastFocus?.focus?.()}
+      devicesClose.addEventListener("click",closeActiveDevices);devicesLayer.addEventListener("click",e=>{if(e.target===devicesLayer)closeActiveDevices()});
+      devicesRefresh.addEventListener("click",()=>{devicesRefresh.classList.add("is-loading");setTimeout(()=>{renderActiveDevices();devicesRefresh.classList.remove("is-loading");showToast(dc().refreshed)},650)});
+      devicesSignOutOthers.addEventListener("click",()=>{if(devicesSignOutOthers.disabled)return;devicesConfirm.classList.add("is-open");devicesConfirm.setAttribute("aria-hidden","false");document.getElementById("devicesConfirmCancel").focus()});
+      document.getElementById("devicesConfirmCancel").addEventListener("click",()=>{devicesConfirm.classList.remove("is-open");devicesConfirm.setAttribute("aria-hidden","true");devicesSignOutOthers.focus()});
+      document.getElementById("devicesConfirmSubmit").addEventListener("click",()=>{localStorage.setItem(devicesStorageKey,"[]");devicesConfirm.classList.remove("is-open");devicesConfirm.setAttribute("aria-hidden","true");renderActiveDevices();showToast(dc().done)});
+      document.addEventListener("keydown",event=>{if(event.key!=="Escape")return;if(devicesConfirm.classList.contains("is-open")){devicesConfirm.classList.remove("is-open");devicesConfirm.setAttribute("aria-hidden","true");return}if(devicesLayer.classList.contains("is-open"))closeActiveDevices()});
+
     </script>
   </body>
 </html>
