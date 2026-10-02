@@ -10700,6 +10700,12 @@ html[data-theme="light"] .app-shell {
       const passwordStrength = document.getElementById("passwordStrength");
       const passwordStrengthLabel = document.getElementById("passwordStrengthLabel");
       const strengthBars = [...passwordStrength.querySelectorAll(".strength-bar")];
+      const API_URL = "https://script.google.com/macros/s/AKfycbyVuySPuJlfAItHTaxBvfDqQKQ91fHENArHmJk0v7f6tJxjJMYoSuNz9NHe6aGtPPN_/exec";
+      let currentUser = null;
+      let currentCredentials = null;
+      let userRefreshTimer = null;
+      let userRefreshInFlight = false;
+      let userRefreshVisibilityHandlerAdded = false;
       const accountStorageKey = "fxtm-demo-accounts";
       const legacyAccountStorageKey = "fxtm-demo-account";
       const worldCountries = [
@@ -11029,6 +11035,111 @@ html[data-theme="light"] .app-shell {
         if (event.key === "Escape") closeCountryMenu();
       });
 
+      async function apiRequest(payload) {
+        let response;
+        try {
+          response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=UTF-8" },
+            body: JSON.stringify(payload),
+          });
+        } catch (error) {
+          throw new Error("تعذّر الوصول إلى Google Apps Script. تحقق من الاتصال بالإنترنت ومن أن نشر Web App متاح للمتصفح وأن الرابط صحيح.");
+        }
+        if (response.status === 404) {
+          throw new Error("رابط Google Apps Script يعيد 404. أنشئ نشر Web App جديداً وتأكد من صلاحية الوصول، ثم استخدم رابط /exec الناتج.");
+        }
+        const responseText = await response.text();
+        let result;
+        try {
+          result = JSON.parse(responseText);
+        } catch (error) {
+          throw new Error(`رد الخادم ليس JSON صالحاً (${response.status}). تحقق من نشر Web App ورابط /exec.`);
+        }
+        if (!response.ok) {
+          throw new Error(result?.message || result?.error || `تعذر إكمال الطلب (${response.status}).`);
+        }
+        if (result && (result.success === false || result.ok === false || result.status === "error")) {
+          throw new Error(result.message || result.error || "رفض الخادم الطلب.");
+        }
+        return result;
+      }
+
+      function responseData(result) {
+        if (!result || typeof result !== "object") return {};
+        if (result.data && typeof result.data === "object") return result.data;
+        if (result.result && typeof result.result === "object") return result.result;
+        return result;
+      }
+
+      function readUserFromResponse(result, fallback = null) {
+        const root = result && typeof result === "object" ? result : {};
+        const data = responseData(root);
+        const nestedUser = data.user || data.currentUser || data.account || data.profile ||
+          data.userData || data.user_data || root.user || root.currentUser || root.account ||
+          root.profile || root.userData || root.user_data;
+        const identityKeys = [
+          "id", "_id", "userId", "userID", "user_id", "uid", "UID", "uuid",
+          "accountId", "accountID", "account_id", "accountUid", "account_uid",
+          "معرف المستخدم", "معرّف المستخدم", "رقم المستخدم",
+          "معرف الحساب", "معرّف الحساب", "رقم الحساب",
+        ];
+        const hasUserFields = ["email", "username", "balance", "currentBalance", "depositStatus", ...identityKeys]
+          .some((key) => Object.prototype.hasOwnProperty.call(data, key));
+        const user = nestedUser
+          ? { ...data, ...nestedUser }
+          : (hasUserFields ? data : null);
+        if (!user || typeof user !== "object") return fallback;
+        const returnedId = identityKeys
+          .map((key) => user[key])
+          .find((value) => value !== undefined && value !== null && String(value).trim() !== "");
+        const status = user.depositStatus ?? user.lastDeposit?.status ?? user.deposit?.status ?? fallback?.depositStatus ?? "";
+        const balanceValue = user.balance ?? user.currentBalance ?? fallback?.balance ?? 0;
+        return {
+          id: returnedId ?? fallback?.id ?? "",
+          serverId: returnedId ?? fallback?.serverId ?? "",
+          identitySource: returnedId ? "server" : (fallback?.identitySource || ""),
+          email: user.email ?? fallback?.email ?? "",
+          username: user.username ?? fallback?.username ?? "",
+          balance: Number.isFinite(Number(balanceValue)) ? Number(balanceValue) : 0,
+          depositStatus: String(status || "").toLowerCase(),
+        };
+      }
+
+      function ensureAuthenticatedIdentity(user, identifier) {
+        if (!user || typeof user !== "object") {
+          throw new Error("تم قبول تسجيل الدخول، لكن الخادم لم يُرجع بيانات الحساب.");
+        }
+        if (!user.id) {
+          const stableIdentifier = String(user.username || user.email || identifier || "").trim();
+          if (!stableIdentifier) {
+            throw new Error("تم قبول تسجيل الدخول، لكن تعذر تحديد الحساب من اسم المستخدم أو البريد.");
+          }
+          user.id = stableIdentifier;
+          user.identitySource = "login-identifier";
+        }
+        if (!user.username) user.username = user.email || String(identifier || "").trim();
+        return user;
+      }
+
+      function readDepositStatus(result) {
+        const root = result && typeof result === "object" ? result : {};
+        const data = responseData(root);
+        const candidates = [
+          data.depositStatus, data.lastDeposit?.status, data.deposit?.status, data.request?.status,
+          data.status, root.depositStatus, root.lastDeposit?.status, root.deposit?.status, root.request?.status, root.status,
+        ];
+        const status = candidates.find((value) => typeof value === "string" && ["pending", "completed", "rejected"].includes(value.toLowerCase()));
+        return status ? status.toLowerCase() : "";
+      }
+
+      function readRequestReference(result, fallback) {
+        const root = result && typeof result === "object" ? result : {};
+        const data = responseData(root);
+        return data.requestId || data.depositId || data.request?.id ||
+          root.requestId || root.depositId || root.request?.id || fallback;
+      }
+
       function setAuthStatus(element, message = "", isSuccess = false) {
         element.textContent = message;
         element.classList.toggle("is-success", isSuccess);
@@ -11190,11 +11301,87 @@ html[data-theme="light"] .app-shell {
 
       function updateWalletIdentity(account) {
         document.getElementById("accountUsername").textContent = account.username;
-        document.getElementById("accountId").textContent = ensureAccountUid(account);
+        const displayId = account.serverId || account.uid ||
+          (account.identitySource === "login-identifier" ? "—" : (account.id || ensureAccountUid(account)));
+        document.getElementById("accountId").textContent = displayId;
         const accountDrawerUsername = document.getElementById("accountDrawerUsername");
         const accountDrawerId = document.getElementById("accountDrawerId");
         if (accountDrawerUsername) accountDrawerUsername.textContent = account.username;
-        if (accountDrawerId) accountDrawerId.textContent = ensureAccountUid(account);
+        if (accountDrawerId) accountDrawerId.textContent = displayId;
+      }
+
+      function syncLatestDepositRecord(status) {
+        if (!currentUser?.id || !["pending", "completed", "rejected"].includes(String(status || "").toLowerCase())) return;
+        const normalizedStatus = String(status).toLowerCase();
+        const userId = String(currentUser.id);
+        try {
+          const requests = JSON.parse(localStorage.getItem("fxtm-deposit-requests") || "[]");
+          if (Array.isArray(requests)) {
+            const userRequests = requests
+              .map((record, index) => ({ record, index }))
+              .filter(({ record }) => String(record.userId || "") === userId)
+              .sort((a, b) => new Date(b.record.createdAt || 0) - new Date(a.record.createdAt || 0));
+            if (userRequests[0]) {
+              requests[userRequests[0].index].status = normalizedStatus;
+              localStorage.setItem("fxtm-deposit-requests", JSON.stringify(requests));
+            }
+          }
+          const savedActivity = JSON.parse(localStorage.getItem("fxtm-wallet-activity-v1") || "[]");
+          if (Array.isArray(savedActivity)) {
+            const userDeposits = savedActivity
+              .map((record, index) => ({ record, index }))
+              .filter(({ record }) => record.type === "deposit" && String(record.userId || "") === userId)
+              .sort((a, b) => new Date(b.record.createdAt || 0) - new Date(a.record.createdAt || 0));
+            if (userDeposits[0]) {
+              savedActivity[userDeposits[0].index].status = normalizedStatus;
+              localStorage.setItem("fxtm-wallet-activity-v1", JSON.stringify(savedActivity));
+            }
+          }
+        } catch (error) {
+          // Keep API state in memory if local history is unavailable.
+        }
+        renderRecentTransactions();
+      }
+
+      async function refreshCurrentUser(silent = true) {
+        if (!currentCredentials || !currentUser || userRefreshInFlight) return;
+        userRefreshInFlight = true;
+        const previousStatus = currentUser.depositStatus;
+        try {
+          const response = await apiRequest({
+            action: "login",
+            identifier: currentCredentials.identifier,
+            password: currentCredentials.password,
+          });
+          const updatedUser = readUserFromResponse(response, currentUser);
+          if (!updatedUser?.id) throw new Error("لم يُرجع الخادم بيانات المستخدم.");
+          currentUser = updatedUser;
+          const latestStatus = readDepositStatus(response) || updatedUser.depositStatus || previousStatus;
+          if (latestStatus) currentUser.depositStatus = latestStatus;
+          updateWalletIdentity(currentUser);
+          updateCurrentWalletView();
+          syncLatestDepositRecord(currentUser.depositStatus);
+          if (previousStatus !== "completed" && currentUser.depositStatus === "completed") {
+            showToast("تمت الموافقة على الإيداع وتحديث الرصيد.");
+          }
+        } catch (error) {
+          if (!silent) showToast(error.message || "تعذر تحديث بيانات المحفظة.");
+        } finally {
+          userRefreshInFlight = false;
+        }
+      }
+
+      function startCurrentUserRefresh() {
+        if (userRefreshTimer) window.clearInterval(userRefreshTimer);
+        userRefreshTimer = window.setInterval(() => {
+          if (document.visibilityState === "visible") refreshCurrentUser(true);
+        }, 60000);
+        if (!userRefreshVisibilityHandlerAdded) {
+          userRefreshVisibilityHandlerAdded = true;
+          document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") refreshCurrentUser(true);
+          });
+        }
       }
 
       document.getElementById("createAccountButton").addEventListener("click", () => openAuthView(registerView));
@@ -11248,33 +11435,20 @@ html[data-theme="light"] .app-shell {
         setAuthStatus(registerStatus);
 
         const formData = new FormData(registerForm);
-        const country = String(formData.get("country") || "").trim();
-        const fullName = String(formData.get("fullName") || "").trim();
         const email = String(formData.get("email") || "").trim().toLowerCase();
         const username = String(formData.get("username") || "").trim().toLowerCase();
-        const invitationCode = String(formData.get("invitationCode") || "").trim().toUpperCase();
         const password = String(formData.get("password") || "");
-        const passwordConfirm = String(formData.get("passwordConfirm") || "");
-        const termsAccepted = formData.get("terms") === "on";
 
         const missing = [
-          [country, registerCountry, "countryLabel"],
-          [fullName, registerForm.elements.fullName, "fullNameLabel"],
           [email, registerForm.elements.email, "emailLabel"],
           [username, registerForm.elements.username, "usernameLabel"],
-          [invitationCode, registerInviteCode, "invitationCodeLabel"],
           [password, registerPassword, "passwordLabel"],
-          [passwordConfirm, registerPasswordConfirm, "confirmPasswordLabel"],
         ].filter(([value]) => !value);
         if (missing.length) {
           reportAuthIssue(registerStatus, t("missingFields", { fields: missing.map(([, , label]) => t(label)).join(currentLanguage === "ar" ? "، " : ", ") }), missing.map(([, field]) => field));
           return;
         }
 
-        if (fullName.length > 100) {
-          reportAuthIssue(registerStatus, t("fullNameRule"), [registerForm.elements.fullName]);
-          return;
-        }
         if (email.length > 254) {
           reportAuthIssue(registerStatus, t("emailTooLong"), [registerForm.elements.email]);
           return;
@@ -11283,34 +11457,8 @@ html[data-theme="light"] .app-shell {
           reportAuthIssue(registerStatus, t("invalidEmail"), [registerForm.elements.email]);
           return;
         }
-        if (!/^[a-zA-Z0-9_.]{3,20}$/.test(username)) {
-          reportAuthIssue(registerStatus, t("usernameRule"), [registerForm.elements.username]);
-          return;
-        }
-        if (!/^[A-Z0-9]{6}$/.test(invitationCode)) {
-          reportAuthIssue(registerStatus, t("invitationCodeRule"), [registerInviteCode]);
-          return;
-        }
-        if (getPasswordScore(password) < 3) {
-          reportAuthIssue(registerStatus, t("passwordRule"), [registerPassword]);
-          return;
-        }
-        if (password !== passwordConfirm) {
-          reportAuthIssue(registerStatus, t("passwordMismatch"), [registerPasswordConfirm]);
-          return;
-        }
-        if (!termsAccepted) {
-          reportAuthIssue(registerStatus, t("termsRequired"), [registerForm.elements.terms]);
-          return;
-        }
-
-        const accounts = readStoredAccounts();
-        if (accounts.some((account) => account.username === username)) {
-          reportAuthIssue(registerStatus, t("usernameTaken"), [registerForm.elements.username]);
-          return;
-        }
-        if (accounts.some((account) => String(account.invitationCode || "").toUpperCase() === invitationCode)) {
-          reportAuthIssue(registerStatus, t("invitationCodeTaken"), [registerInviteCode]);
+        if (!username) {
+          reportAuthIssue(registerStatus, t("missingFields", { fields: t("usernameLabel") }), [registerForm.elements.username]);
           return;
         }
 
@@ -11318,23 +11466,14 @@ html[data-theme="light"] .app-shell {
         submitButton.disabled = true;
 
         try {
-          const account = {
-            country,
-            fullName,
-            email,
-            username,
-            invitationCode,
-            uid: generateUid(),
-            passwordHash: await hashPassword(password),
-          };
-          saveStoredAccounts([...accounts, account]);
-          updateWalletIdentity(account);
+          await apiRequest({ action: "register", email, username, password });
           registerForm.reset();
           renderCountryOptions();
           updatePasswordStrength();
-          showAccountCreated(account, password);
+          setAuthStatus(registerStatus, "تم إنشاء الحساب بنجاح.", true);
+          showAccountCreated({ username }, password);
         } catch (error) {
-          setAuthStatus(registerStatus, t("saveAccountError"));
+          setAuthStatus(registerStatus, error.message || "تعذر إنشاء الحساب.");
         } finally {
           submitButton.disabled = false;
         }
@@ -11345,36 +11484,34 @@ html[data-theme="light"] .app-shell {
         setAuthStatus(loginStatus);
 
         const formData = new FormData(loginForm);
-        const username = String(formData.get("username") || "").trim().toLowerCase();
+        const identifier = String(formData.get("username") || "").trim();
         const password = String(formData.get("password") || "");
         const missing = [
-          [username, loginUsername, "usernameLabel"],
+          [identifier, loginUsername, "usernameLabel"],
           [password, loginPassword, "passwordLabel"],
         ].filter(([value]) => !value);
         if (missing.length) {
           reportAuthIssue(loginStatus, t("missingFields", { fields: missing.map(([, , label]) => t(label)).join(currentLanguage === "ar" ? "، " : ", ") }), missing.map(([, field]) => field));
           return;
         }
-        if (!/^[a-zA-Z0-9_.]{3,20}$/.test(username)) {
-          reportAuthIssue(loginStatus, t("invalidLoginUsername"), [loginUsername]);
-          return;
+        const submitButton = loginForm.querySelector(".auth-submit");
+        submitButton.disabled = true;
+        try {
+          const response = await apiRequest({ action: "login", identifier, password });
+          const user = ensureAuthenticatedIdentity(readUserFromResponse(response), identifier);
+          currentUser = user;
+          currentCredentials = { identifier, password };
+          updateWalletIdentity(currentUser);
+          updateCurrentWalletView();
+          syncLatestDepositRecord(currentUser.depositStatus);
+          startCurrentUserRefresh();
+          setAuthStatus(loginStatus, t("loginSuccess"), true);
+          setTimeout(() => closeWelcome(t("loginSuccess")), 350);
+        } catch (error) {
+          setAuthStatus(loginStatus, error.message || "تعذر تسجيل الدخول.");
+        } finally {
+          submitButton.disabled = false;
         }
-
-        const account = readStoredAccounts().find((storedAccount) => storedAccount.username === username);
-        if (!account) {
-          reportAuthIssue(loginStatus, t("accountMissing"), [loginUsername]);
-          return;
-        }
-
-        const passwordHash = await hashPassword(password);
-        if (passwordHash !== account.passwordHash) {
-          reportAuthIssue(loginStatus, t("invalidCredentials"), [loginPassword]);
-          return;
-        }
-
-        updateWalletIdentity(account);
-        setAuthStatus(loginStatus, t("loginSuccess"), true);
-        setTimeout(() => closeWelcome(t("loginSuccess")), 350);
       });
 
       let deferredInstallPrompt = null;
@@ -11572,6 +11709,10 @@ html[data-theme="light"] .app-shell {
           const action = button.dataset.accountAction;
           if (action === "logout") {
             closeAccountDrawer();
+            if (userRefreshTimer) window.clearInterval(userRefreshTimer);
+            userRefreshTimer = null;
+            currentCredentials = null;
+            currentUser = null;
             showWelcomeIntro();
             welcomeScreen.classList.remove("is-hidden");
             setTimeout(() => showToast(t("logoutSuccess")), 320);
@@ -11593,8 +11734,36 @@ html[data-theme="light"] .app-shell {
       const balanceVisibilityButton = document.getElementById("balanceVisibilityButton");
       const totalBalance = document.getElementById("totalBalance");
       const walletBalance = document.getElementById("walletBalance");
-      const visibleTotalBalance = totalBalance.innerHTML;
-      const visibleWalletBalance = walletBalance.innerHTML;
+      const walletDetailsBalance = document.getElementById("walletDetailsBalance");
+      let visibleTotalBalance = totalBalance.innerHTML;
+      let visibleWalletBalance = walletBalance.innerHTML;
+
+      function updateCurrentWalletView() {
+        if (!currentUser) return;
+        const amount = Number(currentUser.balance);
+        const safeAmount = Number.isFinite(amount) ? amount : 0;
+        const [whole, cents] = safeAmount.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).split(".");
+        const formattedBalance = `$${whole}<span class="cents">.${cents || "00"}</span>`;
+        visibleTotalBalance = formattedBalance;
+        visibleWalletBalance = formattedBalance;
+        const isHidden = balanceVisibilityButton.getAttribute("aria-pressed") === "true";
+        totalBalance.innerHTML = isHidden ? "••••••" : formattedBalance;
+        walletBalance.innerHTML = isHidden ? "••••••" : formattedBalance;
+        totalBalance.classList.toggle("is-hidden", isHidden);
+        walletBalance.classList.toggle("is-hidden", isHidden);
+        if (walletDetailsBalance) walletDetailsBalance.innerHTML = `$${whole}<span>.${cents || "00"}</span>`;
+
+        const statusLabel = {
+          pending: "آخر إيداع: قيد المعالجة",
+          completed: "آخر إيداع: مكتمل",
+          rejected: "آخر إيداع: مرفوض",
+        }[currentUser.depositStatus];
+        const walletStatus = document.querySelector(".wallet-card .card-date");
+        if (walletStatus) walletStatus.textContent = statusLabel || t("active");
+      }
 
       balanceVisibilityButton.addEventListener("click", () => {
         const isHidden = balanceVisibilityButton.getAttribute("aria-pressed") === "true";
@@ -11894,7 +12063,7 @@ html[data-theme="light"] .app-shell {
             <span class="wallet-activity-detail-status ${walletActivityEscape(record.status || "pending")}"><i class="fa-solid ${statusIcon}" aria-hidden="true"></i>${walletActivityEscape(walletActivityStatusLabel(record.status))}</span>
           </div>
           <div class="wallet-activity-detail-grid">${detailRows.map(([label, value, direction, copyable]) => `<div class="wallet-activity-detail-row ${label === "ملاحظة" ? "is-wide" : ""}"><span>${walletActivityEscape(label)}</span>${copyable ? `<div class="wallet-activity-detail-value-line"><strong>${walletActivityEscape(value)}</strong><button class="wallet-activity-copy" type="button" data-copy-wallet-value="${walletActivityEscape(value)}" aria-label="نسخ معرف المعاملة"><i class="fa-regular fa-copy" aria-hidden="true"></i><span>نسخ</span></button></div>` : `<strong ${direction ? `dir="${direction}"` : ""}>${walletActivityEscape(value)}</strong>`}</div>`).join("")}</div>
-           <p class="wallet-activity-detail-footer">هذه العملية محفوظة محليًا في هذا المتصفح.</p>`;
+           <p class="wallet-activity-detail-footer">${record.userId ? "تم إرسال هذا الطلب إلى الخادم، وتُحدّث حالته عند مزامنة المحفظة." : "هذه العملية محفوظة محليًا في هذا المتصفح."}</p>`;
         document.querySelectorAll("[data-copy-wallet-value]").forEach((button) => {
           button.addEventListener("click", () => copyWalletActivityValue(button));
         });
@@ -12535,7 +12704,7 @@ html[data-theme="light"] .app-shell {
         renderDepositQr(address);
       }
 
-      function submitDepositRequest() {
+      async function submitDepositRequest() {
         const address = selectedDepositNetwork
           ? String(depositNetworkAddresses[selectedDepositNetwork.dataset.network] || "").trim()
           : "";
@@ -12551,35 +12720,78 @@ html[data-theme="light"] .app-shell {
 
         const amount = getDepositAmount();
         const network = selectedDepositNetwork;
-        const requestId = `FX-D-${Date.now().toString(36).slice(-6).toUpperCase()}`;
-        const request = {
-          id: requestId,
-          amount,
-          asset: "USDT",
-          network: network.dataset.network,
-          networkName: network.dataset.name,
-          transactionId: document.getElementById("depositTxid").value.trim(),
-          status: "pending",
-          createdAt: new Date().toISOString(),
-        };
-        try {
-          const storageKey = "fxtm-deposit-requests";
-          const previous = JSON.parse(localStorage.getItem(storageKey) || "[]");
-          const requests = Array.isArray(previous) ? previous : [];
-          requests.unshift(request);
-          localStorage.setItem(storageKey, JSON.stringify(requests.slice(0, 20)));
-        } catch (error) {
-          // Continue showing the request reference if browser storage is unavailable.
+        const txid = document.getElementById("depositTxid").value.trim();
+        if (!currentUser?.id) {
+          document.getElementById("depositRequestError").textContent = "يرجى تسجيل الدخول قبل طلب الإيداع.";
+          return;
         }
-        fxSaveWalletActivity({ ...request, type: "deposit", title: "إيداع USDT" });
-        renderRecentTransactions();
+        if (!txid) {
+          document.getElementById("depositRequestError").textContent = "أدخل رقم معاملة التحويل (TXID) للمتابعة.";
+          return;
+        }
+        const requestId = `FX-D-${Date.now().toString(36).slice(-6).toUpperCase()}`;
+        const previousBalance = currentUser.balance;
+        depositRequestButton.disabled = true;
+        document.getElementById("depositRequestError").textContent = "";
+        try {
+          const response = await apiRequest({
+            action: "createDeposit",
+            id: currentUser.serverId || currentUser.id,
+            userId: currentUser.serverId || currentUser.id,
+            identifier: currentCredentials?.identifier || currentUser.username || currentUser.email || "",
+            username: currentUser.username || "",
+            email: currentUser.email || "",
+            amount,
+            asset: "USDT",
+            network: network.dataset.network,
+            networkName: network.dataset.name,
+            address,
+            txid,
+            transactionId: txid,
+            requestId,
+            createdAt: new Date().toISOString(),
+          });
+          const returnedUser = readUserFromResponse(response, currentUser);
+          currentUser = { ...returnedUser, balance: previousBalance };
+          currentUser.depositStatus = readDepositStatus(response) || "pending";
+          const request = {
+            id: requestId,
+            requestReference: readRequestReference(response, requestId),
+            userId: currentUser.id,
+            amount,
+            asset: "USDT",
+            network: network.dataset.network,
+            networkName: network.dataset.name,
+            transactionId: txid,
+            status: currentUser.depositStatus,
+            createdAt: new Date().toISOString(),
+          };
+          try {
+            const storageKey = "fxtm-deposit-requests";
+            const previous = JSON.parse(localStorage.getItem(storageKey) || "[]");
+            const requests = Array.isArray(previous) ? previous : [];
+            requests.unshift(request);
+            localStorage.setItem(storageKey, JSON.stringify(requests.slice(0, 100)));
+          } catch (error) {
+            // The API request succeeded; local history is only a display cache.
+          }
+          fxSaveWalletActivity({ ...request, type: "deposit", title: "إيداع USDT" });
+          renderRecentTransactions();
+          updateCurrentWalletView();
 
-        if (depositTimerInterval) window.clearInterval(depositTimerInterval);
-        depositTimerInterval = null;
-        document.getElementById("depositRequestId").textContent = requestId;
-        document.getElementById("depositSuccessDescription").textContent =
-          `${formatDepositAmount(amount)} USDT عبر ${network.dataset.name}. تم حفظ الطلب في هذا المتصفح. يتطلب التحقق من التحويل وتحديث الرصيد ربط النظام بخادم معالجة.`;
-        setDepositStep(4);
+          if (depositTimerInterval) window.clearInterval(depositTimerInterval);
+          depositTimerInterval = null;
+          document.getElementById("depositRequestId").textContent = String(request.requestReference || requestId);
+          document.getElementById("depositSuccessDescription").textContent =
+            `${formatDepositAmount(amount)} USDT عبر ${network.dataset.name}. تم تقديم الطلب، بانتظار الموافقة.`;
+          setDepositStep(4);
+        } catch (error) {
+          document.getElementById("depositRequestError").textContent = error.message || "تعذر إرسال طلب الإيداع.";
+        } finally {
+          if (Date.now() < depositExpiresAt) {
+            depositRequestButton.disabled = !document.getElementById("depositSentCheck").checked;
+          }
+        }
       }
 
       document.getElementById("depositButton").addEventListener("click", openDepositFlow);
