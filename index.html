@@ -11667,6 +11667,7 @@ html[data-theme="light"] .app-shell {
           updateCurrentWalletView();
           syncLatestDepositRecord(currentUser.depositStatus);
           startCurrentUserRefresh();
+          pullAccountDataFromServer(currentUser.username || localStorage.getItem("username") || "");
           welcomeScreen.classList.add("is-hidden");
         } catch (error) {
           if (["invalid_session", "session_expired", "user_not_found"].includes(error.code)) {
@@ -11810,6 +11811,7 @@ html[data-theme="light"] .app-shell {
           updateCurrentWalletView();
           syncLatestDepositRecord(currentUser.depositStatus);
           startCurrentUserRefresh();
+          pullAccountDataFromServer(user.username || identifier);
           setAuthStatus(loginStatus, t("loginSuccess"), true);
           setTimeout(() => closeWelcome(t("loginSuccess")), 350);
         } catch (error) {
@@ -12208,7 +12210,7 @@ html[data-theme="light"] .app-shell {
         try {
           const items = walletActivityReadStorage().filter((item) => item.id !== record.id);
           items.unshift(record);
-          localStorage.setItem(WALLET_ACTIVITY_STORAGE_KEY, JSON.stringify(items.slice(0, 40)));
+          localStorage.setItem(WALLET_ACTIVITY_STORAGE_KEY, JSON.stringify(items.slice(0, 300)));
         } catch (error) {}
       };
 
@@ -13213,6 +13215,7 @@ html[data-theme="light"] .app-shell {
           const items = Array.isArray(previous) ? previous : [];
           items.unshift(request);
           localStorage.setItem(storageKey, JSON.stringify(items.slice(0, 20)));
+          if (typeof pushAccountDataToServer === "function") pushAccountDataToServer();
         } catch (error) {
           // يستمر العرض حتى لو كان تخزين المتصفح غير متاح.
         }
@@ -14024,11 +14027,190 @@ html[data-theme="light"] .app-shell {
           if (completedNow) showToast("تمت الموافقة على طلب السحب.");
         } catch (e) {}
       }
+      // Pull the full deposit/withdraw history from the spreadsheet so any device shows it.
+      let fxHistorySyncing = false;
+      async function syncHistoryFromServer(username) {
+        if (!username || fxHistorySyncing) return;
+        fxHistorySyncing = true;
+        try {
+          const [dep, wd] = await Promise.all([
+            apiGet({ action: "getDeposits", username }),
+            apiGet({ action: "getWithdrawals", username })
+          ]);
+          const rowsOf = (res, key) => {
+            if (!res || res.ok === false) return [];
+            const d = responseData(res) || {};
+            const r = d[key] || res[key] || d.items || d.rows || res.items || res.rows || (Array.isArray(d) ? d : []);
+            return Array.isArray(r) ? r : [];
+          };
+          const statusOf = (w) => normalizeDepositStatus(w.status_en) || (w.statusCode === "approved" ? "completed" : normalizeDepositStatus(w.statusCode || w.status)) || "pending";
+          const timeOf = (w) => {
+            const raw = w.createdAt || w.timestamp || w.date || w.time || "";
+            const t = Date.parse(String(raw).replace(" ", "T"));
+            return Number.isFinite(t) ? new Date(t).toISOString() : new Date().toISOString();
+          };
+          const uid = currentUser?.id || username;
+          const remote = [];
+          const add = (rows, type, title) => rows.forEach((w, i) => {
+            const amount = Number(w.amount ?? w.value ?? 0);
+            if (!Number.isFinite(amount)) return;
+            const createdAt = timeOf(w);
+            const ref = String(w.requestId || w.id || w.requestReference || w.txid || w.transactionId || "");
+            remote.push({
+              id: ref || `srv-${type}-${createdAt}-${amount}-${i}`,
+              requestReference: ref || undefined,
+              userId: uid, type, title, amount, asset: w.asset || w.currency || "USDT",
+              network: w.network || "", networkName: w.networkName || w.network || "",
+              transactionId: w.txid || w.transactionId || "", address: w.address || w.wallet || "",
+              status: statusOf(w), createdAt, fromServer: true
+            });
+          });
+          add(rowsOf(dep, "deposits"), "deposit", "إيداع USDT");
+          add(rowsOf(wd, "withdrawals"), "withdraw", "سحب USDT");
+          if (!remote.length) return;
+          const local = walletActivityReadStorage();
+          const sameRecord = (a, b) => a.type === b.type && (
+            (b.requestReference && (String(a.id) === b.requestReference || String(a.requestReference || "") === b.requestReference)) ||
+            String(a.id) === String(b.id) ||
+            (Math.abs(Number(a.amount) - Number(b.amount)) < 0.001 && Math.abs(Date.parse(a.createdAt) - Date.parse(b.createdAt)) < 600000));
+          let changed = false;
+          remote.forEach((r) => {
+            const existing = local.find((l) => sameRecord(l, r));
+            if (existing) {
+              if (existing.status !== r.status) { existing.status = r.status; changed = true; }
+            } else { local.push(r); changed = true; }
+          });
+          if (changed) {
+            local.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            localStorage.setItem(WALLET_ACTIVITY_STORAGE_KEY, JSON.stringify(local.slice(0, 300)));
+            if (typeof pushAccountDataToServer === "function") pushAccountDataToServer();
+            renderRecentTransactions();
+            if (typeof renderWalletActivity === "function") { try { renderWalletActivity(); } catch (e) {} }
+          }
+        } catch (e) {
+          console.error("History sync failed:", e);
+        } finally { fxHistorySyncing = false; }
+      }
+      // ===== مزامنة كامل بيانات الحساب مع جدول البيانات =====
+      // كل ما يخص المستخدم (سجل المحفظة، طلبات الإيداع/السحب/التحويل، المظهر)
+      // يُرفع إلى جدول البيانات ويُسترجع على أي جهاز عند تسجيل الدخول.
+      const ACCOUNT_SYNC_KEYS = [
+        "fxtm-wallet-activity-v1",
+        "fxtm-deposit-requests",
+        "fxtm-withdraw-requests",
+        "fxtm-transfer-requests",
+        "fxtm-theme"
+      ];
+      const ACCOUNT_SYNC_TS_KEY = "fxtm-account-sync-ts";
+      let accountPushTimer = null;
+      let accountPulling = false;
+
+      function accountSyncGetTs() {
+        try { return Number(localStorage.getItem(ACCOUNT_SYNC_TS_KEY) || 0) || 0; } catch (e) { return 0; }
+      }
+      function accountSyncSetTs(ts) {
+        try { localStorage.setItem(ACCOUNT_SYNC_TS_KEY, String(ts)); } catch (e) {}
+      }
+      function accountSyncCollectPayload() {
+        const data = {};
+        ACCOUNT_SYNC_KEYS.forEach((key) => {
+          try {
+            const raw = localStorage.getItem(key);
+            if (raw !== null && raw !== undefined) data[key] = raw;
+          } catch (e) {}
+        });
+        return data;
+      }
+      // دمج قوائم السجل: لا تكرار، ولا حذف لسجلات موجودة على الجهاز.
+      function accountSyncMergeList(localRaw, remoteRaw) {
+        let local = [], remote = [];
+        try { local = JSON.parse(localRaw || "[]"); } catch (e) {}
+        try { remote = JSON.parse(remoteRaw || "[]"); } catch (e) {}
+        if (!Array.isArray(local)) local = [];
+        if (!Array.isArray(remote)) remote = [];
+        const keyOf = (r) => String(r?.id || r?.requestReference || r?.transactionId || r?.txid || "");
+        const merged = [...local];
+        remote.forEach((r) => {
+          const rk = keyOf(r);
+          const existing = rk
+            ? merged.find((l) => keyOf(l) === rk)
+            : merged.find((l) => l.type === r.type && Math.abs(Number(l.amount) - Number(r.amount)) < 0.001 && Math.abs(Date.parse(l.createdAt || 0) - Date.parse(r.createdAt || 0)) < 600000);
+          if (existing) {
+            // حالة الخادم هي المرجع (موافقات الإدارة تتم من الجدول).
+            if (r.status && existing.status !== r.status) existing.status = r.status;
+          } else {
+            merged.push(r);
+          }
+        });
+        merged.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        return JSON.stringify(merged.slice(0, 300));
+      }
+      function accountSyncApplyPayload(data) {
+        let changed = false;
+        ACCOUNT_SYNC_KEYS.forEach((key) => {
+          const remoteRaw = data[key];
+          if (remoteRaw === undefined || remoteRaw === null) return;
+          try {
+            const localRaw = localStorage.getItem(key);
+            if (key === "fxtm-theme") {
+              if (localRaw !== remoteRaw) { localStorage.setItem(key, remoteRaw); changed = true; }
+            } else {
+              const merged = accountSyncMergeList(localRaw, remoteRaw);
+              if (merged !== (localRaw || "[]")) { localStorage.setItem(key, merged); changed = true; }
+            }
+          } catch (e) {}
+        });
+        if (changed) {
+          try { if (typeof applyTheme === "function") applyTheme(localStorage.getItem("fxtm-theme") || "dark"); } catch (e) {}
+          try { renderRecentTransactions(); } catch (e) {}
+          try { if (typeof renderWalletActivity === "function") renderWalletActivity(); } catch (e) {}
+        }
+      }
+      // رفع كل بيانات الحساب إلى الجدول (مؤجّل قليلاً لتجميع التغييرات المتتالية).
+      function pushAccountDataToServer() {
+        if (accountPushTimer) window.clearTimeout(accountPushTimer);
+        accountPushTimer = window.setTimeout(async () => {
+          const username = fxUser();
+          if (!username) return;
+          const ts = Date.now();
+          try {
+            const res = await apiPost({ action: "saveUserData", username, ts, data: accountSyncCollectPayload() });
+            if (res && res.ok !== false) accountSyncSetTs(ts);
+          } catch (e) {}
+        }, 1500);
+      }
+      // استرجاع كل بيانات الحساب من الجدول عند فتح الحساب على أي جهاز.
+      async function pullAccountDataFromServer(username) {
+        if (!username || accountPulling) return;
+        accountPulling = true;
+        try {
+          const res = await apiGet({ action: "getUserData", username });
+          if (!res || res.ok === false) return;
+          const d = responseData(res) || {};
+          const data = d.data || res.data || d.payload || res.payload;
+          const serverTs = Number(d.ts || res.ts || 0) || 0;
+          if (!data || typeof data !== "object") return;
+          if (serverTs && serverTs <= accountSyncGetTs()) return;
+          accountSyncApplyPayload(data);
+          if (serverTs) accountSyncSetTs(serverTs);
+        } catch (e) {
+          console.error("Account data sync failed:", e);
+        } finally { accountPulling = false; }
+      }
+
       async function syncBalanceFromServer() {
         try {
           if (!currentUser) return;
-          syncWithdrawalsFromServer(currentUser.username || localStorage.getItem("username") || "");
-          const username = currentUser.username || localStorage.getItem("username") || "";
+          const syncName = currentUser.username || localStorage.getItem("username") || "";
+          syncHistoryFromServer(syncName);
+          syncWithdrawalsFromServer(syncName);
+          // استرجاع كامل بيانات الحساب من الجدول بشكل دوري (مرة كل دقيقة كحد أقصى).
+          const now = Date.now();
+          if (!syncBalanceFromServer._lastPull || now - syncBalanceFromServer._lastPull > 60000) {
+            syncBalanceFromServer._lastPull = now;
+            pullAccountDataFromServer(syncName);
+          }
+          const username = syncName;
           if (!username) return;
           const data = await apiGet({ action: "getBalance", username });
           if (!data || data.ok === false) return;
