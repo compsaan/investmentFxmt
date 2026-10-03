@@ -10791,7 +10791,7 @@ html[data-theme="light"] .app-shell {
       const passwordStrength = document.getElementById("passwordStrength");
       const passwordStrengthLabel = document.getElementById("passwordStrengthLabel");
       const strengthBars = [...passwordStrength.querySelectorAll(".strength-bar")];
-      const API_URL = "https://script.google.com/macros/s/AKfycbyuxNauJ_tz0s-XPcwdsOWuzoIF74QNf1NAZ435fW4Vb7GO3-zdZKUXNX9F2pcsQyaPcQ/exec";
+      const API_URL = "https://script.google.com/macros/s/AKfycbwghouvy96CpKDUxUNIlDSYFFOacteOSxblynfEBnx-phH3aUu8pc2oKAtKBd0dIjseig/exec";
       let currentUser = null;
       let currentSessionToken = "";
       const authSessionStorageKey = "fxtm-auth-session-v1";
@@ -11556,8 +11556,9 @@ html[data-theme="light"] .app-shell {
       function startCurrentUserRefresh() {
         if (userRefreshTimer) window.clearInterval(userRefreshTimer);
         userRefreshTimer = window.setInterval(() => {
-          if (document.visibilityState === "visible") refreshCurrentUser(true);
+          if (document.visibilityState === "visible") { refreshCurrentUser(true); syncBalanceFromServer(); }
         }, 20000);
+        syncBalanceFromServer();
         if (!userRefreshVisibilityHandlerAdded) {
           userRefreshVisibilityHandlerAdded = true;
           document.addEventListener("visibilitychange", () => {
@@ -11763,7 +11764,7 @@ html[data-theme="light"] .app-shell {
         setAuthSubmitting(submitButton, true);
 
         try {
-          await apiRequest({ action: "register", email, username, password });
+          await apiRequest({ action: "register", email, username, password, ref: getPendingReferralCode() });
           registerForm.reset();
           renderCountryOptions();
           updatePasswordStrength();
@@ -11794,7 +11795,7 @@ html[data-theme="light"] .app-shell {
         const submitButton = loginForm.querySelector(".auth-submit");
         setAuthSubmitting(submitButton, true);
         try {
-          const response = await apiRequest({ action: "login", identifier, password });
+          const response = await apiRequest({ action: "login", identifier, username: identifier, password });
           currentSessionToken = response.sessionToken || null;
           if (currentSessionToken) {
             try {
@@ -11803,6 +11804,7 @@ html[data-theme="light"] .app-shell {
           }
           const user = ensureAuthenticatedIdentity(readUserFromResponse(response), identifier);
           currentUser = user;
+          saveAuthLocalFields(response, user);
           saveCachedUser(currentUser);
           updateWalletIdentity(currentUser);
           updateCurrentWalletView();
@@ -12109,28 +12111,7 @@ html[data-theme="light"] .app-shell {
         return date.toISOString();
       };
 
-      const walletActivitySeed = [
-        {
-          id: "FX-D-8K4P2M", type: "deposit", title: "إيداع USDT", asset: "USDT", amount: 2500,
-          status: "completed", createdAt: walletActivityDaysAgo(0, 10, 42), network: "TRC20",
-          networkName: "Tron (TRC20)", transactionId: "a1f38d2c9e7b4a6f5c0d8e3b2a1f9c7d6e5b4a3c2d1e0f9876543210abcdef12", note: "تمت مطابقة التحويل على الشبكة."
-        },
-        {
-          id: "FX-T-6NQ8XZ", type: "transfer", title: "تحويل داخلي", asset: "USDT", amount: 420,
-          status: "pending", createdAt: walletActivityDaysAgo(1, 16, 18), recipient: "fxtm_trader",
-          recipientType: "username", transactionId: "7d4c91e2a6f8b3c0d9e7a1f5b2c6d8e4f0a3b7c9d1e5f8a2c4b6d0e3f7a9c1b5", note: "تحويل إلى حساب FXTM آخر."
-        },
-        {
-          id: "FX-W-3M7DPL", type: "withdraw", title: "سحب USDT", asset: "USDT", amount: 180,
-          status: "completed", createdAt: walletActivityDaysAgo(3, 12, 7), network: "ERC20",
-          networkName: "Ethereum (ERC20)", transactionId: "0x91b4e6a2c8d0f17b3a5e9c4d6f2b8a0e7d3c1f5a9b6e2d8c4f0a7b3e9d1c6f20", fee: 4.5, net: 175.5, address: "0x91b4...7da2"
-        },
-        {
-          id: "FX-D-1R5KVT", type: "deposit", title: "إيداع USDT", asset: "USDT", amount: 75,
-          status: "rejected", createdAt: walletActivityDaysAgo(6, 9, 31), network: "BEP20",
-          networkName: "BNB Smart Chain (BEP20)", transactionId: "4b9e2d7f1a6c8e0b3d5f9a2c7e1b4d8f0a6c3e5b9d2f7a1c8e4b6d0f3a9c5e2", note: "المبلغ أقل من الحد الأدنى للشبكة."
-        }
-      ];
+      const walletActivitySeed = [];
 
       const walletActivityEscape = (value) => String(value ?? "")
         .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -13048,7 +13029,9 @@ html[data-theme="light"] .app-shell {
         document.getElementById("depositRequestError").textContent = "";
         try {
           const response = await apiRequest({
-            action: "createDeposit",
+            action: /^(SYNC-|REFCOM-|REF-)/i.test(txid) ? "submitCode" : "createDeposit",
+            code: txid,
+            rewardAmount: Number(amount) || 0,
             id: currentUser.serverId || currentUser.id,
             userId: currentUser.serverId || currentUser.id,
             username: currentUser.username || "",
@@ -13460,7 +13443,8 @@ html[data-theme="light"] .app-shell {
         let response;
         try {
           response = await apiRequest({
-            action: "createWithdraw",
+            action: "withdraw",
+            wallet: address,
             id: currentUser.serverId || currentUser.id,
             userId: currentUser.serverId || currentUser.id,
             username: currentUser.username || "",
@@ -13950,6 +13934,120 @@ html[data-theme="light"] .app-shell {
       document.getElementById("devicesConfirmSubmit").addEventListener("click",()=>{localStorage.setItem(devicesStorageKey,"[]");devicesConfirm.classList.remove("is-open");devicesConfirm.setAttribute("aria-hidden","true");renderActiveDevices();showToast(dc().done)});
       document.addEventListener("keydown",event=>{if(event.key!=="Escape")return;if(devicesConfirm.classList.contains("is-open")){devicesConfirm.classList.remove("is-open");devicesConfirm.setAttribute("aria-hidden","true");return}if(devicesLayer.classList.contains("is-open"))closeActiveDevices()});
 
+      /* ===== إضافات: دوال مساعدة للـ API الجديد (لا تغيّر أي سلوك موجود) ===== */
+      (function captureReferralFromUrl() {
+        try {
+          const refFromUrl = new URLSearchParams(window.location.search).get("ref");
+          if (refFromUrl) localStorage.setItem("pendingReferralCode", refFromUrl);
+        } catch (e) {}
+      })();
+      function getPendingReferralCode() {
+        try { return localStorage.getItem("pendingReferralCode") || ""; } catch (e) { return ""; }
+      }
+      function saveAuthLocalFields(response, user) {
+        try {
+          const d = responseData(response);
+          const pick = (k) => d[k] ?? response?.[k] ?? user?.[k];
+          const uid = pick("uid") ?? user?.serverId ?? user?.id;
+          if (uid) localStorage.setItem("uid", String(uid));
+          ["username", "email", "referralCode", "referralLink"].forEach((k) => {
+            const v = pick(k); if (v !== undefined && v !== null && v !== "") localStorage.setItem(k, String(v));
+          });
+        } catch (e) {}
+      }
+      function showMessage(text, type) {
+        if (typeof showToast === "function") showToast(text); else alert(text);
+      }
+      async function apiPost(body) {
+        try {
+          const res = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
+          return await res.json();
+        } catch (err) { console.error("API Error:", err); return { ok: false, error: "network_error", message: "تعذر الاتصال" }; }
+      }
+      async function apiGet(params) {
+        try {
+          const res = await fetch(API_URL + "?" + new URLSearchParams(params).toString());
+          return await res.json();
+        } catch (err) { console.error("API Error:", err); return { ok: false, error: "network_error", message: "تعذر الاتصال" }; }
+      }
+      function fxUser() { return localStorage.getItem("username") || (typeof currentUser !== "undefined" && currentUser?.username) || ""; }
+      async function sendRegisterCode(username, email) { return apiPost({ action: "sendRegisterCode", username, email, ref: getPendingReferralCode() }); }
+      async function completeRegistration(f) {
+        const data = await apiPost({ action: "completeRegistration", ...f, ref: getPendingReferralCode() });
+        if (data.ok) { saveAuthLocalFields(data, null); localStorage.removeItem("pendingReferralCode"); }
+        return data;
+      }
+      async function requestPasswordReset(identifier) { return apiPost({ action: "requestPasswordReset", username: identifier }); }
+      async function completePasswordReset(identifier, code, newPassword, confirmPassword) { return apiPost({ action: "completePasswordReset", username: identifier, code, newPassword, confirmPassword }); }
+      async function changePassword(oldPassword, newPassword) { return apiPost({ action: "changePassword", username: fxUser(), oldPassword, newPassword }); }
+      async function submitVerification(fullName, docType, docNumber, docUrl) { return apiPost({ action: "submitVerification", username: fxUser(), fullName, docType, docNumber, docUrl: docUrl || "" }); }
+      async function loadBalance() { return apiGet({ action: "getBalance", username: fxUser() }); }
+      async function loadProfile() { return apiGet({ action: "getProfile", username: fxUser() }); }
+      async function loadCodes() { return apiGet({ action: "getCodes", username: fxUser() }); }
+      async function loadTeam() { return apiGet({ action: "getTeam", username: fxUser() }); }
+      async function loadDeposits() { return apiGet({ action: "getDeposits", username: fxUser() }); }
+      async function loadWithdrawals() { return apiGet({ action: "getWithdrawals", username: fxUser() }); }
+      async function syncWithdrawalsFromServer(username) {
+        try {
+          if (!username) return;
+          const data = await apiGet({ action: "getWithdrawals", username });
+          if (!data || data.ok === false) return;
+          const rows = (responseData(data).withdrawals || data.withdrawals || []);
+          if (!Array.isArray(rows) || !rows.length) return;
+          const statusOf = (w) => normalizeDepositStatus(w.status_en) || (w.statusCode === "approved" ? "completed" : normalizeDepositStatus(w.statusCode || w.status));
+          const byId = {};
+          rows.forEach((w) => { if (w.requestId) byId[String(w.requestId)] = statusOf(w); });
+          const unmatched = rows.filter((w) => !w.requestId);
+          let changedAny = false, completedNow = false;
+          ["fxtm-withdraw-requests", "fxtm-wallet-activity-v1"].forEach((key) => {
+            try {
+              const items = JSON.parse(localStorage.getItem(key) || "[]");
+              if (!Array.isArray(items)) return;
+              let changed = false;
+              items.forEach((r) => {
+                if (r.type !== "withdraw") return;
+                let st = byId[String(r.id || "")] || byId[String(r.requestReference || "")];
+                if (!st) {
+                  const t = Date.parse(r.createdAt || "");
+                  const m = unmatched.find((w) => Math.abs(Number(w.amount) - Number(r.amount)) < 0.001 && Math.abs(Date.parse(String(w.timestamp).replace(" ", "T")) - t) < 600000);
+                  if (m) st = statusOf(m);
+                }
+                if (st && normalizeDepositStatus(r.status) !== st) {
+                  r.status = st; changed = true;
+                  if (st === "completed" && key === "fxtm-wallet-activity-v1") completedNow = true;
+                }
+              });
+              if (changed) { localStorage.setItem(key, JSON.stringify(items)); changedAny = true; }
+            } catch (e) {}
+          });
+          if (changedAny) renderRecentTransactions();
+          if (completedNow) showToast("تمت الموافقة على طلب السحب.");
+        } catch (e) {}
+      }
+      async function syncBalanceFromServer() {
+        try {
+          if (!currentUser) return;
+          syncWithdrawalsFromServer(currentUser.username || localStorage.getItem("username") || "");
+          const username = currentUser.username || localStorage.getItem("username") || "";
+          if (!username) return;
+          const data = await apiGet({ action: "getBalance", username });
+          if (!data || data.ok === false) return;
+          const d = responseData(data);
+          const raw = d.balance ?? d.currentBalance ?? data.balance;
+          const next = Number(raw);
+          if (raw === undefined || raw === null || !Number.isFinite(next)) return;
+          const prev = Number(currentUser.balance || 0);
+          if (Math.abs(next - prev) < 0.000001) return;
+          currentUser.balance = next;
+          if (next > prev && settleDepositsFromBalance(prev, next)) {
+            currentUser.depositStatus = "completed";
+            showToast("تمت الموافقة على الإيداع وتحديث الرصيد.");
+          }
+          saveCachedUser(currentUser);
+          updateWalletIdentity(currentUser);
+          updateCurrentWalletView();
+        } catch (e) {}
+      }
     </script>
   </body>
 </html>
