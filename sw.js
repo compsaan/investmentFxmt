@@ -1,7 +1,8 @@
-const CACHE_NAME = "fxtm-app-v4";
+const CACHE_NAME = "fxtm-app-v5";
 const APP_SHELL = [
   "./",
   "./index.html",
+  "./pwa-install.js",
   "./manifest.webmanifest",
   "./fxtm-app-icon-192.png",
   "./fxtm-app-icon-512.png",

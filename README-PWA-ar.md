@@ -1,6 +1,6 @@
 # تثبيت تطبيق FXTM
 
-هذه الملفات تجعل الواجهة تطبيق ويب قابلًا للتثبيت (PWA). ضع `index.html` و`manifest.webmanifest` و`sw.js` وأيقونتي PNG في جذر المستودع نفسه.
+هذه الملفات تجعل الواجهة تطبيق ويب قابلًا للتثبيت (PWA). ضع `index.html` و`pwa-install.js` و`manifest.webmanifest` و`sw.js` وأيقونتي PNG في جذر المستودع نفسه.
 
 ## النشر على GitHub Pages
 
